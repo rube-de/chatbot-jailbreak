@@ -1,5 +1,5 @@
 name: chatbot-jailbreak
-version: 0.1.22
+version: 0.1.23
 tee: tdx
 kind: container
 resources:
@@ -31,8 +31,8 @@ deployments:
           min_tcb_evaluation_data_number: 18
           tdx: {}
       enclaves:
-        - KXaPjHZ5IpluUMTme6mRgJp/dX7lz/ZBMbQlG1M/mhkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==
-        - /oAs39sFe0I2cqdTprAsyrEyeB5YR0VBT3jFmTTjrsAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==
+        - 4UQE/Dd3vnyChdwSJ+fbybk6eiwu5sc/AeC4nueaMqcAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==
+        - +0WRRC1TtnCVDxAwZobQF2LNtHhp434ENJP4cH8ePikAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==
       endorsements:
         - any: {}
       fees: endorsing_node

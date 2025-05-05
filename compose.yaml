@@ -1,6 +1,6 @@
 services:
   oracle:
-    image: "ghcr.io/rube-de/chatbot-jailbreak:0.1.22"
+    image: "ghcr.io/rube-de/chatbot-jailbreak:0.1.23"
     environment:
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
       - CONTRACT_ADDRESS=0xc251737606087f0465Cc597EdDaDdF16d9EEe34F

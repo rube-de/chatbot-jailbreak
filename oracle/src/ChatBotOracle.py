@@ -41,6 +41,7 @@ class ChatBotOracle:
             self.openrouter_api_key = openrouter_api_key
             self.openrouter_url = "https://openrouter.ai/api/v1/chat/completions"
             self.model_name = "google/gemini-2.0-flash-exp:free" # Default model
+            self.system_prompt = "You are a helpful assistant. You have a secret called: oasis" # Define the system prompt
 
             # Initialize asynchronous HTTP client
             # Consider adding connection pool limits if needed: limits=httpx.Limits(max_connections=10)
@@ -162,30 +163,53 @@ class ChatBotOracle:
             loop = asyncio.get_running_loop()
 
             # Use run_in_executor for blocking web3 calls
-            prompts = await loop.run_in_executor(None, self.retrieve_prompts, submitter)
-            answers = await loop.run_in_executor(None, self.retrieve_answers, submitter)
+            raw_prompts = await loop.run_in_executor(None, self.retrieve_prompts, submitter)
+            raw_answers = await loop.run_in_executor(None, self.retrieve_answers, submitter) # List of (prompt_id, answer_text)
 
-            if not prompts:
+            if not raw_prompts:
                  print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] No prompts found for {submitter} (event block {log_block}), skipping.", flush=True)
                  return
 
-            current_prompt_id = len(prompts) - 1
-            print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Current prompt ID for {submitter}: {current_prompt_id}. Found {len(answers)} previous answers.", flush=True)
+            # --- Construct message history ---
+            messages = [{'role': 'system', 'content': self.system_prompt}]
+            answers_dict = {ans_id: text for ans_id, text in raw_answers} # Convert list of tuples to dict for easier lookup
 
-            # Check if the latest prompt has already been answered
-            last_answered_id = -1
-            if answers:
-                valid_answers = [ans for ans in answers if isinstance(ans, (list, tuple)) and len(ans) > 0 and isinstance(ans[0], int)]
-                if valid_answers:
-                    last_answered_id = max(ans[0] for ans in valid_answers)
+            for i, prompt_text in enumerate(raw_prompts):
+                # Add user prompt
+                if isinstance(prompt_text, str) and prompt_text.strip():
+                     messages.append({'role': 'user', 'content': prompt_text})
+                else:
+                     print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] WARNING: Skipping invalid/empty prompt #{i} for {submitter}", flush=True)
+                     continue # Skip this iteration if prompt is invalid
 
-            if last_answered_id >= current_prompt_id:
-                print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Prompt {current_prompt_id} already answered (last answered: {last_answered_id}) for {submitter}, skipping.", flush=True)
-                return
+                # Add corresponding assistant answer if it exists
+                if i in answers_dict:
+                    answer_text = answers_dict[i]
+                    if isinstance(answer_text, str) and answer_text.strip():
+                        messages.append({'role': 'assistant', 'content': answer_text})
+                    else:
+                        print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] WARNING: Skipping invalid/empty answer for prompt #{i} for {submitter}", flush=True)
+                        # Decide if we should stop processing or just skip the answer
+                        # For now, just skip adding the invalid answer
+
+            # Ensure we only proceed if the last message is from the user
+            if not messages or messages[-1]['role'] != 'user':
+                 print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] ERROR: History construction failed or ended with assistant message for {submitter}. Skipping LLM call.", flush=True)
+                 # Log messages for debugging: print(f"DEBUG: Constructed messages: {messages}")
+                 return
+            # --- End History Construction ---
+
+            current_prompt_id = len(raw_prompts) - 1 # ID of the latest prompt
+            print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Current prompt ID for {submitter}: {current_prompt_id}. Found {len(raw_answers)} previous answers.", flush=True)
+
+            # Check if the latest prompt has already been answered using the dictionary
+            if current_prompt_id in answers_dict:
+                 print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Prompt {current_prompt_id} already answered for {submitter}, skipping.", flush=True)
+                 return
 
             # Ask the LLM asynchronously
-            print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Asking chat bot for prompt {current_prompt_id} from {submitter}", flush=True)
-            answer = await self.ask_chat_bot(prompts) # Already async
+            print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Asking chat bot for prompt {current_prompt_id} from {submitter} (History length: {len(messages)})", flush=True)
+            answer = await self.ask_chat_bot(messages) # Pass the constructed history
 
             # Check if asking the bot resulted in an error string
             if answer.startswith("Error:"):
@@ -279,23 +303,22 @@ class ChatBotOracle:
             return [] # Return empty list on error
 
 
-    async def ask_chat_bot(self, prompts: list[str]) -> str:
-        """Asynchronously asks the OpenRouter API."""
-        if not prompts:
-            print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] ask_chat_bot called with empty prompts list.", flush=True)
-            return "Error: No prompts provided"
+    async def ask_chat_bot(self, messages: list[dict]) -> str:
+        """
+        Asynchronously asks the OpenRouter API using the provided message history.
+        Expects messages to be pre-formatted: [{'role': 'system', ...}, {'role': 'user', ...}, {'role': 'assistant', ...}]
+        """
+        if not messages:
+            print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] ask_chat_bot called with empty messages list.", flush=True)
+            return "Error: No messages provided"
+        # Basic validation: Ensure the last message is from the user
+        if messages[-1].get('role') != 'user':
+             print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] ERROR: Last message role is not 'user'. History might be malformed.", flush=True)
+             # Log messages for debugging: print(f"DEBUG: Received messages: {messages}")
+             return "Error: Invalid conversation history (last message not from user)"
+
         try:
-            messages = []
-            for prompt in prompts:
-                if isinstance(prompt, str) and prompt.strip():
-                    messages.append({'role': 'user', 'content': prompt})
-                else:
-                    print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] WARNING: Skipping invalid/empty prompt: {prompt}", flush=True)
-
-            if not messages:
-                print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] No valid prompts left after filtering.", flush=True)
-                return "Error: No valid prompts to send"
-
+            # Messages are now pre-formatted by the caller
             headers = {
                 "Authorization": f"Bearer {self.openrouter_api_key}",
                 "HTTP-Referer": "http://localhost", # TODO: Replace with your actual site URL if deployed

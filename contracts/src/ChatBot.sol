@@ -3,18 +3,20 @@ pragma solidity 0.8.24;
 
 import {Subcall} from "@oasisprotocol/sapphire-contracts/contracts/Subcall.sol";
 import {SiweAuth} from "@oasisprotocol/sapphire-contracts/contracts/auth/SiweAuth.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 struct Answer {
     uint256 promptId;
     string answer;
 }
 
-contract ChatBot is SiweAuth {
+contract ChatBot is SiweAuth, Ownable {
     mapping(address => string[]) private _prompts;
     mapping(address => Answer[]) private _answers;
 
     address public oracle;    // Oracle address running inside TEE.
     bytes21 public roflAppID; // Allowed app ID within TEE for managing allowed oracle address.
+    string private systemPrompt; // System prompt for the chatbot AI model
 
     event PromptSubmitted(address indexed sender);
     event AnswerSubmitted(address indexed sender);
@@ -28,9 +30,10 @@ contract ChatBot is SiweAuth {
     // @param domain is used for SIWE login on the frontend
     // @param roflAppId is the attested ROFL app that is allowed to call setOracle()
     // @param inOracle only for testing, not attested; set the oracle address for accessing prompts
-    constructor(string memory domain, bytes21 inRoflAppID, address inOracle) SiweAuth(domain) {
+    constructor(string memory domain, bytes21 inRoflAppID, address inOracle) SiweAuth(domain) Ownable(msg.sender) {
         roflAppID = inRoflAppID;
         oracle = inOracle;
+        systemPrompt = "You are a helpful AI assistant."; // Default system prompt
     }
 
     // For the user: checks whether authToken is a valid SIWE token
@@ -52,6 +55,14 @@ contract ChatBot is SiweAuth {
     modifier onlyOracle() {
         if (msg.sender != oracle) {
             revert UnauthorizedOracle();
+        }
+        _;
+    }
+
+    // Checks whether the transaction or query was signed by the owner or the oracle.
+    modifier onlyOwnerOrOracle() {
+        if (msg.sender != owner() && msg.sender != oracle) {
+            revert UnauthorizedUserOrOracle(); // Reusing existing error for simplicity
         }
         _;
     }
@@ -110,6 +121,18 @@ contract ChatBot is SiweAuth {
     // corresponding to the address should never leave TEE.
     function setOracle(address addr) external onlyTEE(roflAppID) {
         oracle = addr;
+    }
+
+    // Sets the system prompt for the AI model.
+    // Only the contract owner can call this function.
+    function setSystemPrompt(string memory newPrompt) external onlyOwner {
+        systemPrompt = newPrompt;
+    }
+
+    // Returns the current system prompt.
+    // Only the owner or the oracle can call this function.
+    function getSystemPrompt() external view onlyOwnerOrOracle returns (string memory) {
+        return systemPrompt;
     }
 
     // Submits the answer to the prompt for a given user address.

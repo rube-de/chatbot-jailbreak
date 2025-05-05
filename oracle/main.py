@@ -6,7 +6,7 @@ import sys
 import traceback
 import time # Added for timestamp
 
-print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] main.py v0.1.22 starting...", flush=True)
+print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] main.py v0.1.23 starting...", flush=True)
 
 # Import required modules. If any fail, the script will exit with an ImportError.
 print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Importing src.ChatBotOracle...", flush=True)
