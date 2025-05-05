@@ -17,9 +17,3 @@ services:
     restart: on-failure
     extra_hosts:
       - "host.docker.internal:host-gateway"
-
-  frontend:
-    build:
-      dockerfile: Dockerfile.frontend
-    ports:
-      - "5173:5173"

@@ -1,5 +1,6 @@
 import asyncio
 import requests
+import json
 
 from ollama import Client, ChatResponse
 
@@ -21,6 +22,9 @@ class ChatBotOracle:
         self.ollama_address = ollama_address
         self.contract = contract_utility.w3.eth.contract(address=contract_address, abi=abi)
         self.w3 = contract_utility.w3
+        self.debug_mode = network_name == 'sapphire-localnet'
+        if self.debug_mode:
+            print(f"Debug mode enabled. Using contract {contract_address} on {network_name}.")
 
     def set_oracle_address(self):
         contract_addr = self.contract.functions.oracle().call()
@@ -49,7 +53,7 @@ class ChatBotOracle:
                     print(f"Last prompt already answered, skipping")
                     break
                 print(f"Asking chat bot", flush=True)
-                answer = self.ask_chat_bot(prompts)
+                answer = self.ask_chat_bot(prompts, answers)
                 print(f"Storing chat bot answer for {submitter}", flush=True)
                 self.submit_answer(answer, len(prompts)-1, submitter)
             await asyncio.sleep(poll_interval)
@@ -83,18 +87,36 @@ class ChatBotOracle:
             return []
 
 
-    def ask_chat_bot(self, prompts: list[str]) -> str:
+    def ask_chat_bot(self, prompts: list[str], answers: list[(int, str)]) -> str:
         try:
             messages = []
-            for prompt in prompts:
+            # Create a dictionary for quick lookup of answers by prompt_id
+            answer_map = {prompt_id: answer_content for prompt_id, answer_content in answers}
+
+            # Interleave prompts and answers
+            for i, prompt in enumerate(prompts):
                 messages.append({
                     'role': 'user',
                     'content': prompt
                 })
+                # Check if there is a corresponding answer for this prompt_id
+                if i in answer_map:
+                    messages.append({
+                        'role': 'assistant',
+                        'content': answer_map[i]
+                    })
+
+            if self.debug_mode:
+                print("Messages sent to Ollama:")
+                print(json.dumps(messages, indent=2))
+
             client = Client(
                 host=self.ollama_address,
             )
             response: ChatResponse = client.chat(model='deepseek-r1:1.5b', messages=messages)
+            if self.debug_mode:
+                print("Response from Ollama:")
+                print(json.dumps(response, indent=2))
             return response['message']['content']
         except Exception as e:
             print(f"Error calling Ollama API: {e}")
