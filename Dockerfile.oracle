@@ -1,6 +1,7 @@
 FROM ghcr.io/foundry-rs/foundry:latest AS contracts-build
+WORKDIR /contracts
 COPY ./contracts /contracts
-RUN cd /contracts && forge build
+RUN forge build
 
 FROM python:alpine3.17
 #ENV CONTRACT_ADDRESS=0x5FbDB2315678afecb367f032d93F642f64180aa3 # Must be defined in compose.yaml

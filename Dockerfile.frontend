@@ -1,6 +1,7 @@
 FROM ghcr.io/foundry-rs/foundry:latest AS contracts-build
+WORKDIR /contracts
 COPY ./contracts /contracts
-RUN cd /contracts && forge build
+RUN forge build
 
 FROM node:21-alpine3.19
 WORKDIR /frontend

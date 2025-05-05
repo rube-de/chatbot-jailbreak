@@ -1,5 +1,5 @@
 from web3 import Web3
-from web3.middleware import construct_sign_and_send_raw_middleware
+from web3.middleware import SignAndSendRawMiddlewareBuilder
 from eth_account.signers.local import LocalAccount
 from eth_account import Account
 import json
@@ -20,7 +20,8 @@ class ContractUtility:
         networks = {
             "sapphire": "https://sapphire.oasis.io",
             "sapphire-testnet": "https://testnet.sapphire.oasis.io",
-            "sapphire-localnet": "http://localhost:8545",
+            # "sapphire-localnet": "http://localhost:8545",
+            "sapphire-localnet": "http://host.docker.internal:8545",
         }
         self.network = networks[network_name] if network_name in networks else network_name
         self.w3 = self.setup_web3_middleware(secret)
@@ -33,7 +34,7 @@ class ContractUtility:
         account: LocalAccount = Account.from_key(secret)
         provider = Web3.WebsocketProvider(self.network) if self.network.startswith("ws:") else Web3.HTTPProvider(self.network)
         w3 = Web3(provider)
-        w3.middleware_onion.add(construct_sign_and_send_raw_middleware(account))
+        w3.middleware_onion.inject(SignAndSendRawMiddlewareBuilder.build(account), layer=0)
         w3 = sapphire.wrap(w3, account)
         # w3.eth.set_gas_price_strategy(rpc_gas_price_strategy)
         w3.eth.default_account = account.address
