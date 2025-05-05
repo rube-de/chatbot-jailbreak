@@ -1,12 +1,4 @@
 services:
-  ollama:
-    image: "docker.io/ollama/ollama"
-    ports:
-      - "11434:11434"
-    volumes:
-      - ~/ollama-storage:/root/.ollama
-    entrypoint: ["/usr/bin/bash", "-c", "/bin/ollama serve & sleep 5; ollama pull deepseek-r1:1.5b; wait"]
-
   "sapphire-localnet":
     image: "ghcr.io/oasisprotocol/sapphire-localnet"
     platform: "linux/x86_64"
@@ -30,10 +22,11 @@ services:
   oracle:
     environment:
       CONTRACT_ADDRESS: 0x5FbDB2315678afecb367f032d93F642f64180aa3
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
     build:
       dockerfile: Dockerfile.oracle
-        #    entrypoint: /bin/sh -c 'python main.py --network http://sapphire-localnet:8545 --ollama-address http://ollama:11434 --secret 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 $${CONTRACT_ADDRESS}'
-    entrypoint: /bin/sh -c 'sleep 100; python main.py --network http://sapphire-localnet:8545 --ollama-address http://ollama:11434 --secret 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 0x5FbDB2315678afecb367f032d93F642f64180aa3'
+    # Updated entrypoint: removed --ollama-address, using $CONTRACT_ADDRESS env var
+    entrypoint: /bin/sh -c 'sleep 100; python main.py --network http://sapphire-localnet:8545 --secret 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 $$CONTRACT_ADDRESS'
     restart: on-failure
     depends_on:
       contracts:

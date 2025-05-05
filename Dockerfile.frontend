@@ -1,12 +1,21 @@
 FROM ghcr.io/foundry-rs/foundry:latest AS contracts-build
-COPY ./contracts /contracts
-RUN cd /contracts && forge build
+WORKDIR /contracts
+COPY ./contracts .
+RUN forge build
 
-FROM node:21-alpine3.19
+FROM node:21-alpine3.19 AS frontend
 WORKDIR /frontend
-COPY ./frontend/yarn.lock ./frontend/package.json /frontend
-COPY --from=contracts-build /contracts /contracts
-RUN yarn install
-COPY ./frontend /frontend
+
+# Install dependencies first (better caching)
+COPY ./frontend/package.json ./frontend/yarn.lock ./
+RUN yarn install --frozen-lockfile
+
+# Copy contract artifacts
+COPY --from=contracts-build /contracts/out /contracts/out
+
+# Copy application code
+COPY ./frontend .
+
+# Expose port and set startup command
 EXPOSE 5173
 CMD ["yarn", "dev", "--host", "0.0.0.0"]

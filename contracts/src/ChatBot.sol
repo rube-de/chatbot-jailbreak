@@ -114,7 +114,7 @@ contract ChatBot is SiweAuth {
 
     // Submits the answer to the prompt for a given user address.
     // Called by the oracle within TEE.
-    function submitAnswer(string memory answer, uint256 promptId, address addr) external onlyOracle() {
+    function submitAnswer(string memory answer, uint256 promptId, address addr) external onlyTEE(roflAppID) {
         if (promptId >= _prompts[addr].length) {
             revert InvalidPromptId();
         }

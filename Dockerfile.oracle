@@ -1,12 +1,14 @@
 FROM ghcr.io/foundry-rs/foundry:latest AS contracts-build
-COPY ./contracts /contracts
-RUN cd /contracts && forge build
+WORKDIR /contracts
+COPY ./contracts .
+RUN forge build
 
-FROM python:alpine3.17
+FROM python:alpine3.17 AS oracle
 #ENV CONTRACT_ADDRESS=0x5FbDB2315678afecb367f032d93F642f64180aa3 # Must be defined in compose.yaml
 WORKDIR /oracle
 COPY ./oracle /oracle
 COPY --from=contracts-build /contracts /contracts
-RUN apk update && apk add python3-dev gcc libc-dev
-RUN pip install -r requirements.txt
+RUN apk update && \
+    apk add --no-cache python3-dev gcc libc-dev && \
+    pip install --no-cache-dir -r requirements.txt
 ENTRYPOINT ["python", "main.py", "${CONTRACT_ADDRESS}"]

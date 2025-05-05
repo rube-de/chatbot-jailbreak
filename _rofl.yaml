@@ -1,0 +1,42 @@
+name: demo-rofl-chatbot
+version: 0.1.0
+repository: https://github.com/oasisprotocol/demo-rofl-chatbot
+author: Matevž Jekovec <matevz@oasisprotocol.org>
+license: Apache-2.0
+tee: tdx
+kind: container
+resources:
+  memory: 16384
+  cpus: 4
+  storage:
+    kind: disk-persistent
+    size: 10000
+artifacts:
+  firmware: https://github.com/oasisprotocol/oasis-boot/releases/download/v0.4.1/ovmf.tdx.fd#db47100a7d6a0c1f6983be224137c3f8d7cb09b63bb1c7a5ee7829d8e994a42f
+  kernel: https://github.com/oasisprotocol/oasis-boot/releases/download/v0.4.1/stage1.bin#06e12cba9b2423b4dd5916f4d84bf9c043f30041ab03aa74006f46ef9c129d22
+  stage2: https://github.com/oasisprotocol/oasis-boot/releases/download/v0.4.1/stage2-podman.tar.bz2#6f2487aa064460384309a58c858ffea9316e739331b5c36789bb2f61117869d6
+  container:
+    runtime: https://github.com/oasisprotocol/oasis-sdk/releases/download/rofl-containers%2Fv0.4.1/rofl-containers#bdd2735af9ff10c9b1c1e8db535f4751739bd3707600c57b81e80195e6207673
+    compose: compose.yaml
+deployments:
+  default:
+    app_id: rofl1qrtetspnld9efpeasxmryl6nw9mgllr0euls3dwn
+    network: testnet
+    paratime: sapphire
+    admin: dave
+    trust_root:
+      height: 25327057
+      hash: 40c0672323c8e314090e95800a597a5d587e41a9b149cc5d7b0aeb8f8794b9f7
+    policy:
+      quotes:
+        pcs:
+          tcb_validity_period: 30
+          min_tcb_evaluation_data_number: 17
+          tdx: {}
+      enclaves:
+        - YjeeznQx9i/UQKVoPcOVT3P5oxOHGJ6r1VwMBetuSREAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==
+        - IyVddKd5AtSGmo7FHnZrj0vIzfIOp3DMBFHwUbb0qVQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==
+      endorsements:
+        - any: {}
+      fees: endorsing_node
+      max_expiration: 3
