@@ -37,7 +37,7 @@ class ChatBotOracle:
     async def log_loop(self, poll_interval):
         print(f"Listening for prompts...", flush=True)
         while True:
-            logs = self.contract.events.PromptSubmitted().get_logs(fromBlock=self.w3.eth.block_number)
+            logs = self.contract.events.PromptSubmitted().get_logs(from_block=self.w3.eth.block_number)
             for log in logs:
                 submitter = log.args.sender
                 print(f"New prompt submitted by {submitter}")
@@ -57,13 +57,12 @@ class ChatBotOracle:
     def run(self) -> None:
         self.set_oracle_address()
 
-        # Subscribe to PromptSubmitted event
-        loop = asyncio.get_event_loop()
+        # Run the asynchronous log loop
         try:
-            loop.run_until_complete(
-                asyncio.gather(self.log_loop(2)))
-        finally:
-            loop.close()
+            asyncio.run(self.log_loop(2))
+        except KeyboardInterrupt:
+            print("Oracle stopped.")
+        # No need for manual loop closing, asyncio.run handles it.
 
     def retrieve_prompts(self,
                          address: str) -> list[str]:
