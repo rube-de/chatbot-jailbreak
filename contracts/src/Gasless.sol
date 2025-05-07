@@ -5,10 +5,11 @@ import { encryptCallData } from "@oasisprotocol/sapphire-contracts/contracts/Cal
 import { EIP155Signer } from "@oasisprotocol/sapphire-contracts/contracts/EIP155Signer.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { Sapphire } from "@oasisprotocol/sapphire-contracts/contracts/Sapphire.sol";
+import { EthereumUtils } from "@oasisprotocol/sapphire-contracts/contracts/EthereumUtils.sol";
 
 struct EthereumKeypair {
     address addr;
-    bytes32 secret;
+    bytes32 secretKey; // Changed from bytes32 to store the full secret key
     uint64 nonce;
 }
 
@@ -30,28 +31,20 @@ contract Gasless is Ownable {
     error Gasless__SignerFundingTransferFailed();
     error Gasless__CallerNotSignerAddress();
     error Gasless__NonceTooLow(uint64 provided, uint64 current);
+    error Gasless__WithdrawalSignerNotInitialized();
+    error Gasless__WithdrawalNonceTooLow(uint64 provided, uint64 current);
 
 
     /// @notice Initializes Ownable, generates the internal signing keypair, and funds the signer address with any value sent on deployment.
-    constructor(address initialOwner) Ownable(initialOwner) payable {
-        bytes memory rand = Sapphire.randomBytes(32, abi.encodePacked("GaslessProxySeed"));
-        if (rand.length != 32) revert Gasless__RandomBytesLengthError(rand.length, 32);
-
-        (bytes memory publicKey, bytes memory secretKey) = Sapphire.generateSigningKeyPair(
-            Sapphire.SigningAlg.Ed25519Pure,
-            rand
-        );
-        // Derive an Ethereum-compatible address from the Ed25519 public key
-        address signerAddr = address(uint160(uint256(keccak256(publicKey))));
-        bytes32 signerSecret;
-        assembly {
-            signerSecret := mload(add(secretKey, 32))
-        }
+    constructor(address inOwner) Ownable(inOwner) payable {
+        (address signerAddr, bytes32 secretKey) = EthereumUtils.generateKeypair();
+        
         kp = EthereumKeypair({
             addr: signerAddr,
-            secret: signerSecret,
+            secretKey: secretKey,
             nonce: 0
         });
+        
         emit SignerInitialized(signerAddr);
 
         if (msg.value > 0) {
@@ -87,18 +80,19 @@ contract Gasless is Ownable {
         if (kp.addr == address(0)) revert Gasless__SignerNotInitialized();
 
         bytes memory proxyCallData = abi.encode(userAddress, targetContract, targetCallData);
-
-        EIP155Signer.EthTx memory tx = EIP155Signer.EthTx({
-            nonce: kp.nonce,
-            gasPrice: 100_000_000_000,
-            gasLimit: 500000,
-            to: address(this),
-            value: 0,
-            data: encryptCallData(abi.encodeCall(this.proxy, (proxyCallData))),
-            chainId: block.chainid
-        });
-
-        return EIP155Signer.sign(kp.addr, kp.secret, tx);
+        return EIP155Signer.sign(
+            kp.addr,
+            kp.secretKey,
+            EIP155Signer.EthTx({
+                nonce: kp.nonce,
+                gasPrice: 100_000_000_000,
+                gasLimit: 500000,
+                to: address(this),
+                value: 0,
+                data: encryptCallData(abi.encodeCall(this.proxy, (proxyCallData))),
+                chainId: block.chainid
+            })
+        );
     }
 
     /// @notice Executes the target contract call.
@@ -110,7 +104,7 @@ contract Gasless is Ownable {
             (address, address, bytes)
         );
 
-        (bool success, bytes memory returnData) = targetContract.call(targetCallData);
+        (bool success, bytes memory returnData) = targetContract.call{value: msg.value}(targetCallData);
 
         emit TransactionProxied(targetContract, userAddress, success);
 
@@ -133,8 +127,8 @@ contract Gasless is Ownable {
         onlyOwner
         returns (bytes memory signedTxData)
     {
-        require(kp.addr != address(0), "Gasless: Signer not initialized");
-        require(nonce >= kp.nonce, "Gasless: Provided nonce too low");
+        if (kp.addr == address(0)) revert Gasless__WithdrawalSignerNotInitialized();
+        if (nonce < kp.nonce) revert Gasless__WithdrawalNonceTooLow(nonce, kp.nonce);
 
         EIP155Signer.EthTx memory withdrawalTx = EIP155Signer.EthTx({
             nonce: nonce,
@@ -146,7 +140,7 @@ contract Gasless is Ownable {
             chainId: block.chainid
         });
 
-        signedTxData = EIP155Signer.sign(kp.addr, kp.secret, withdrawalTx);
+        signedTxData = EIP155Signer.sign(kp.addr, kp.secretKey, withdrawalTx);
         emit WithdrawalTxCreated(owner(), amount);
     }
 

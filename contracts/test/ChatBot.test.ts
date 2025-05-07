@@ -1,8 +1,11 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
-import { ChatBot, Gasless } from "../typechain-types"; // Use generated types
-import hre from "hardhat";
+import { ChatBot, Gasless } from "../typechain"; // Use generated types
+import {
+    isCalldataEnveloped,
+    wrapEthereumProvider,
+  } from '@oasisprotocol/sapphire-paratime';
 
 describe("ChatBot Gasless Tests", function () {
     let chatBot: ChatBot;
@@ -10,24 +13,29 @@ describe("ChatBot Gasless Tests", function () {
     let owner: HardhatEthersSigner;
     let user: HardhatEthersSigner;
     let oracle: HardhatEthersSigner;
+    let provider: any;
 
     before(async function () {
         [owner, user, oracle] = await ethers.getSigners();
 
         // Deploy ChatBot
-        chatBot = await hre.ethers.deployContract("ChatBot", [
+        chatBot = await ethers.deployContract("ChatBot", [
             "example.com",
             "0x00ea3babcc43dd729557412e1544f41d6c4ae26524",
-            oracle.address,
+            owner.address,
+            owner.address
         ]);
+        await chatBot.waitForDeployment();
 
         // console.log("ChatBot deployed to:", await chatBot.getAddress());
 
         // Deploy Gasless
-        gaslessProxy = await hre.ethers.deployContract("Gasless", [owner]);
-        // console.log("Gasless proxy deployed to:", await gaslessProxy.getAddress());
+        gaslessProxy = await ethers.deployContract("Gasless", [owner]);
+        await gaslessProxy.waitForDeployment();
+        console.log("Gasless proxy deployed to:", await gaslessProxy.getAddress());
 
         // send some eth to gaslessProxy
+        console.log("Funding gasless proxy...");
         const tx = await owner.sendTransaction({
             to: gaslessProxy.getAddress(),
             value: ethers.parseEther("1"),
@@ -36,25 +44,30 @@ describe("ChatBot Gasless Tests", function () {
 
         // Set Gasless proxy in ChatBot
         await chatBot.connect(owner).setGaslessProxy(await gaslessProxy.getAddress());
-        // console.log("Gasless proxy set.");
+        console.log("Gasless proxy set.");
+
+        provider = wrapEthereumProvider(ethers.provider);
     });
 
     describe("appendPrompt (Gasless)", function () {
         it.only("Should allow gasless prompt submission via proxy", async function () {
+            
             const prompt = "Hello from gasless!";
             const initialNonce = await gaslessProxy.getNonce();
 
             // Prepare calldata for ChatBot.appendPrompt(address,string)
             const callData = chatBot.interface.encodeFunctionData("appendPrompt", [user.address, prompt]);
             try {
-            // Create signed tx using Gasless
-            const signedTx = await gaslessProxy.makeProxyTx(user.address, await chatBot.getAddress(), callData); // Use getAddress()
+                // Create signed tx using Gasless
+                const gaslessProxyUser = gaslessProxy.connect(user);
+                const signedTx = await gaslessProxyUser.makeProxyTx(user.address, await chatBot.getAddress(), callData);
 
-            // Broadcast the signed tx to the RPC node
-            // Note: In a real scenario, this would be broadcast by a relayer or frontend
-            // Here we simulate broadcasting using ethers.provider.sendTransaction (ethers v6 syntax)
-            
-                await ethers.provider.send("eth_sendRawTransaction", [signedTx]);
+                const response = await provider.broadcastTransaction(signedTx);
+                expect(isCalldataEnveloped(response.data)).to.be.true;
+                await response.wait();
+
+                const receipt = await provider.getTransactionReceipt(response.hash);
+                if (!receipt || receipt.status != 1) throw new Error('tx failed');
             } catch (error) {
                 console.error("Error sending raw transaction:", error);
             }

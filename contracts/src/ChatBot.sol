@@ -1,10 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
-pragma solidity ^0.8.24;
 
 import {Subcall} from "@oasisprotocol/sapphire-contracts/contracts/Subcall.sol";
 import {SiweAuth} from "@oasisprotocol/sapphire-contracts/contracts/auth/SiweAuth.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 struct Answer {
@@ -13,14 +11,11 @@ struct Answer {
 }
 
 contract ChatBot is SiweAuth, Ownable {
-contract ChatBot is SiweAuth, Ownable {
     mapping(address => string[]) private _prompts;
     mapping(address => Answer[]) private _answers;
 
     address public oracle;    // Oracle address running inside TEE.
     bytes21 public roflAppID; // Allowed app ID within TEE for managing allowed oracle address.
-
-    address public gaslessProxyAddress;
     string private systemPrompt;
 
     event PromptSubmitted(address indexed sender);
@@ -31,14 +26,6 @@ contract ChatBot is SiweAuth, Ownable {
     error UnauthorizedUserOrOracle();
     error UnauthorizedOracle();
     error NotOwnerOrOracle();
-    error ChatBot__UnauthorizedProxy();
-
-    modifier onlyGaslessProxy() {
-        if (msg.sender != gaslessProxyAddress) {
-            revert ChatBot__UnauthorizedProxy();
-        }
-        _;
-    }
 
     // Sets up a chat bot smart contract.
     // @param domain is used for SIWE login on the frontend.
@@ -53,10 +40,6 @@ contract ChatBot is SiweAuth, Ownable {
     ) SiweAuth(domain) Ownable(initialOwner) {
         roflAppID = inRoflAppID;
         oracle = inOracle;
-    }
-
-    function setGaslessProxy(address proxy) external onlyOwner {
-        gaslessProxyAddress = proxy;
     }
 
     // For the user: checks whether authToken is a valid SIWE token
@@ -98,10 +81,10 @@ contract ChatBot is SiweAuth, Ownable {
     }
 
     // Append the new prompt and request answer.
-    // Called by the user via gasless proxy.
-    function appendPrompt(address user, string memory prompt) external onlyGaslessProxy {
-        _prompts[user].push(prompt);
-        emit PromptSubmitted(user);
+    // Called by the user.
+    function appendPrompt(string memory prompt) external {
+        _prompts[msg.sender].push(prompt);
+        emit PromptSubmitted(msg.sender);
     }
 
     // Clears the conversation.
