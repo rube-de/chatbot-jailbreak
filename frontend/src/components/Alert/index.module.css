@@ -1,9 +1,7 @@
 .card.card {
-  min-height: 450px;
   padding: 0 4.6875rem 0;
   margin-bottom: 0;
   place-self: center;
-  margin-top: -2.5rem;
 }
 
 .alert {

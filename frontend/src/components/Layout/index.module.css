@@ -56,3 +56,35 @@
     display: block;
   }
 }
+
+.logoLink {
+  display: inline-flex; /* Aligns icon nicely */
+  align-items: center;
+  flex-shrink: 0; /* Prevent logo from shrinking */
+}
+
+/*
+.headerControls {
+  display: flex;
+  align-items: center;
+  gap: 1rem; 
+  position: relative; 
+}
+
+.headerControls > * {
+  flex-shrink: 0; 
+}
+*/
+
+.navigation {
+  display: flex;
+  align-items: center;
+  flex-grow: 1; /* Allows this section to take up space */
+  margin: 0 5rem; /* Optional: if more space is needed around the nav */
+}
+
+.walletSection {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0; /* Prevent wallet button from shrinking */
+}

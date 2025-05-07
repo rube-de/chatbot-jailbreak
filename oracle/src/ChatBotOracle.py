@@ -1,7 +1,8 @@
 import asyncio
 import requests
+import json
 
-from ollama import Client, ChatResponse
+from ollama import Client, ChatResponse, ResponseError # Added ResponseError
 
 from .ContractUtility import ContractUtility
 from .RoflUtility import RoflUtility
@@ -21,6 +22,9 @@ class ChatBotOracle:
         self.ollama_address = ollama_address
         self.contract = contract_utility.w3.eth.contract(address=contract_address, abi=abi)
         self.w3 = contract_utility.w3
+        self.debug_mode = network_name == 'sapphire-localnet'
+        if self.debug_mode:
+            print(f"Debug mode enabled. Using contract {contract_address} on {network_name}.")
 
     def set_oracle_address(self):
         contract_addr = self.contract.functions.oracle().call()
@@ -37,7 +41,7 @@ class ChatBotOracle:
     async def log_loop(self, poll_interval):
         print(f"Listening for prompts...", flush=True)
         while True:
-            logs = self.contract.events.PromptSubmitted().get_logs(fromBlock=self.w3.eth.block_number)
+            logs = self.contract.events.PromptSubmitted().get_logs(from_block=self.w3.eth.block_number)
             for log in logs:
                 submitter = log.args.sender
                 print(f"New prompt submitted by {submitter}")
@@ -49,7 +53,7 @@ class ChatBotOracle:
                     print(f"Last prompt already answered, skipping")
                     break
                 print(f"Asking chat bot", flush=True)
-                answer = self.ask_chat_bot(prompts)
+                answer = self.ask_chat_bot(prompts, answers)
                 print(f"Storing chat bot answer for {submitter}", flush=True)
                 self.submit_answer(answer, len(prompts)-1, submitter)
             await asyncio.sleep(poll_interval)
@@ -57,13 +61,12 @@ class ChatBotOracle:
     def run(self) -> None:
         self.set_oracle_address()
 
-        # Subscribe to PromptSubmitted event
-        loop = asyncio.get_event_loop()
+        # Run the asynchronous log loop
         try:
-            loop.run_until_complete(
-                asyncio.gather(self.log_loop(2)))
-        finally:
-            loop.close()
+            asyncio.run(self.log_loop(2))
+        except KeyboardInterrupt:
+            print("Oracle stopped.")
+        # No need for manual loop closing, asyncio.run handles it.
 
     def retrieve_prompts(self,
                          address: str) -> list[str]:
@@ -84,22 +87,79 @@ class ChatBotOracle:
             return []
 
 
-    def ask_chat_bot(self, prompts: list[str]) -> str:
+    def ask_chat_bot(self, prompts: list[str], answers: list[(int, str)]) -> str:
         try:
+            # Retrieve the system prompt from the contract
+            system_prompt_text = ""
+            try:
+                print("Attempting to retrieve system prompt...") # New log
+                system_prompt_text = self.contract.functions.getSystemPrompt().call()
+                if self.debug_mode and system_prompt_text:
+                    print(f"Retrieved system prompt: '{system_prompt_text}'")
+                elif self.debug_mode and not system_prompt_text: # New conditional log
+                    print("System prompt was retrieved, but it is empty.") # New log
+            except Exception as e:
+                print(f"Error retrieving system prompt: {e}. Proceeding without it.")
+
             messages = []
-            for prompt in prompts:
+            if system_prompt_text:
+                messages.append({
+                    'role': 'system',
+                    'content': system_prompt_text
+                })
+
+            # Create a dictionary for quick lookup of answers by prompt_id
+            answer_map = {prompt_id: answer_content for prompt_id, answer_content in answers}
+
+            # Interleave prompts and answers
+            for i, prompt in enumerate(prompts):
                 messages.append({
                     'role': 'user',
                     'content': prompt
                 })
+                # Check if there is a corresponding answer for this prompt_id
+                if i in answer_map:
+                    messages.append({
+                        'role': 'assistant',
+                        'content': answer_map[i]
+                    })
+
+            if self.debug_mode:
+                print("Messages sent to Ollama:")
+                print(json.dumps(messages, indent=2))
+
             client = Client(
                 host=self.ollama_address,
             )
             response: ChatResponse = client.chat(model='deepseek-r1:1.5b', messages=messages)
+            
+            # This part is only reached if client.chat() succeeds
+            if self.debug_mode:
+                print("Response from Ollama (message content):")
+                # Safely log the message content, or the whole message if it's a dict
+                if 'message' in response and isinstance(response['message'], dict) and 'content' in response['message']:
+                    print(response['message']['content'])
+                elif 'message' in response: # if message is not a dict but has content
+                     print(str(response['message'])) # fallback to string representation
+                else:
+                    print("Ollama response structure not as expected for logging.")
+
             return response['message']['content']
-        except Exception as e:
-            print(f"Error calling Ollama API: {e}")
-            return "Error generating response"
+        except ResponseError as e_ollama: # Specific Ollama error
+            print(f"Ollama API ResponseError:")
+            if hasattr(e_ollama, 'status_code'):
+                print(f"  Status Code: {e_ollama.status_code}")
+            if hasattr(e_ollama, 'error'):
+                print(f"  Error: {e_ollama.error}")
+            else:
+                print(f"  Raw Ollama error: {e_ollama}")
+            return "Error generating response from Ollama (API ResponseError)"
+        except Exception as e_generic: # Generic error
+            print(f"Error calling Ollama API (generic exception): {e_generic}")
+            # Attempt to see if the generic exception object has more details
+            if hasattr(e_generic, 'args') and e_generic.args:
+                print(f"  Exception args: {e_generic.args}")
+            return "Error generating response (generic exception)"
 
     def submit_answer(self, answer: str, prompt_id: int, address: str):
         # Set a message

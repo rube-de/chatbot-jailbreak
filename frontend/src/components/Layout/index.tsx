@@ -1,7 +1,8 @@
 import { FC } from 'react'
-import { Outlet } from 'react-router-dom'
+import { Outlet, Link } from 'react-router-dom' // Import Link
 import classes from './index.module.css'
 import { ConnectWallet } from '../ConnectWallet'
+import { AdminButton } from '../AdminButton/AdminButton' // Import AdminButton
 import { Alert } from '../Alert'
 import { useAppState } from '../../hooks/useAppState'
 import { Button } from '../Button'
@@ -44,8 +45,15 @@ export const Layout: FC = () => {
             </div>
           )}
           <header className={classes.header}>
-            <LogoIcon />
-            <ConnectWallet inline={isMobileScreen} />
+            <Link to="/" className={classes.logoLink}>
+              <LogoIcon />
+            </Link>
+            <nav className={classes.navigation}>
+              <AdminButton />
+            </nav>
+            <div className={classes.walletSection}>
+              <ConnectWallet inline={isMobileScreen} />
+            </div>
           </header>
         </>
       }

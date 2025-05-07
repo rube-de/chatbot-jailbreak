@@ -2,6 +2,7 @@ import { FC } from 'react'
 import { Layout } from './components/Layout'
 import { createHashRouter, RouterProvider } from 'react-router-dom'
 import { HomePage } from './pages/HomePage'
+import { AdminPage } from './pages/AdminPage/AdminPage' // Import AdminPage
 import { EIP1193ContextProvider } from './providers/EIP1193Provider'
 import { Web3ContextProvider } from './providers/Web3Provider'
 import { AppStateContextProvider } from './providers/AppStateProvider'
@@ -17,6 +18,10 @@ const router = createHashRouter([
       {
         path: '/',
         element: <HomePage />,
+      },
+      {
+        path: '/admin', // New route for AdminPage
+        element: <AdminPage />,
       },
       {
         path: '*',

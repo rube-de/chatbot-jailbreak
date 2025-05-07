@@ -1,1 +1,3 @@
 *.orc
+
+node_modules/

@@ -332,6 +332,27 @@ export const Web3ContextProvider: FC<PropsWithChildren> = ({ children }) => {
     await getTransaction(hash)
   }
 
+  const getOwner = async (): Promise<string | null> => {
+    try {
+      const chatBot = await getChatBot()
+      // No auth needed for owner() view function as it's public
+      const ownerAddress = await chatBot.owner()
+      return ownerAddress
+    } catch (e) {
+      handleKnownEthersErrors(e as EthersError)
+      handleKnownErrors(e as Error)
+      // Optionally, you might want to set an app error state here
+      return null
+    }
+  }
+
+  const setSystemPromptContract = async (newPrompt: string): Promise<void> => {
+    const chatBot = await getChatBot()
+    // The setSystemPrompt function on the contract is already restricted to owner
+    const tx = await chatBot.setSystemPrompt(newPrompt)
+    await tx.wait() // Wait for the transaction to be mined
+  }
+
   const providerState: Web3ProviderContext = {
     state,
     isProviderAvailable,
@@ -342,6 +363,8 @@ export const Web3ContextProvider: FC<PropsWithChildren> = ({ children }) => {
     getPromptsAnswers,
     ask: interactingWithChainWrapper(appendPrompt),
     clear: interactingWithChainWrapper(clearPrompt),
+    getOwner: getOwner, // Expose the new function
+    setSystemPrompt: interactingWithChainWrapper(setSystemPromptContract), // Expose the wrapped function
   }
 
   return <Web3Context.Provider value={providerState}>{children}</Web3Context.Provider>
