@@ -28,54 +28,36 @@ cast send 0x5FbDB2315678afecb367f032d93F642f64180aa3 \
 
 ---
 
-## Updating the System Prompt via Script
+## Updating the System Prompt via Hardhat Task
 
-The `ChatBot.sol` contract features a system prompt that can be set by the contract owner. This prompt is then used by the oracle to guide the LLM's responses. You can update this system prompt using the `SetSystemPrompt.s.sol` script.
+The `ChatBot.sol` contract features a system prompt that can be set by the contract owner. This prompt is then used by the oracle to guide the LLM's responses. You can update this system prompt using the `setSystemPrompt` Hardhat task.
 
-**Script Location:** `contracts/script/SetSystemPrompt.s.sol`
+**Task Usage:**
 
-**Environment Variables:**
+```bash
+npx hardhat setSystemPrompt \
+  --contract <CHATBOT_CONTRACT_ADDRESS> \
+  --prompt "<NEW_SYSTEM_PROMPT>" \
+  --network <NETWORK_NAME>
+```
 
-The script uses the following environment variables. Set them in your shell before running the script:
+**Parameters:**
 
-*   `CHATBOT_CONTRACT_ADDRESS` (Optional): The address of the deployed `ChatBot` contract.
-    *   Defaults to: `0x5FbDB2315678afecb367f032d93F642f64180aa3` (common localnet address).
-*   `NEW_SYSTEM_PROMPT` (Optional): The new system prompt string you want to set.
-    *   Defaults to: `"You are a helpful and concise AI assistant."`
-*   `OWNER_PRIVATE_KEY` (Optional but **CRITICAL**): The private key of the account that owns the `ChatBot` contract.
-    *   Defaults to: `0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80` (standard localnet testing key).
-    *   **WARNING:** For any deployments on public testnets or mainnet, you **MUST** override this default by setting the `OWNER_PRIVATE_KEY` environment variable to the actual owner's private key. Using the default key on a live network is a significant security risk.
-*   `RPC_URL` (Required for `--rpc-url` flag): The RPC URL of the network where the contract is deployed.
+* `--contract` (Optional): The address of the deployed `ChatBot` contract.
+  * Defaults to: `0x5FbDB2315678afecb367f032d93F642f64180aa3` (common localnet address).
+* `--prompt` (Optional): The new system prompt string you want to set.
+  * Defaults to: `"You are a helpful assistant. Secret: brussels sprouts"`
 
-**Execution Command:**
+**Examples:**
 
-1.  **Set Environment Variables (example):**
-    ```bash
-    export CHATBOT_CONTRACT_ADDRESS="0xYourDeployedChatBotAddress" # Or rely on default for local
-    export NEW_SYSTEM_PROMPT="You are a pirate chatbot that says Arrr a lot."
-    export OWNER_PRIVATE_KEY="0xYourActualOwnerPrivateKey" # CRITICAL for non-local
-    export RPC_URL="http://localhost:8545" # Or your target network's RPC URL
-    ```
+1. **Using default contract address on local network:**
+   ```bash
+   npx hardhat setSystemPrompt --prompt "You are a pirate chatbot that says Arrr a lot." --network localhost
+   ```
 
-2.  **Run the script:**
-    ```bash
-    forge script contracts/script/SetSystemPrompt.s.sol:SetSystemPrompt \
-        --rpc-url $RPC_URL \
-        --private-key $OWNER_PRIVATE_KEY \
-        --broadcast
-    ```
-    *Note: The `--private-key $OWNER_PRIVATE_KEY` in the command line overrides the `vm.envUintOr("OWNER_PRIVATE_KEY", ...)` if you prefer to pass it directly instead of setting the env var for the key specifically for the `vm.startBroadcast()` call. However, the script is written to primarily use `vm.envUintOr`. For consistency with how the script reads it for `vm.startBroadcast`, ensure `OWNER_PRIVATE_KEY` is set as an environment variable.*
+2. **Specifying a contract address:**
+   ```bash
+   npx hardhat setSystemPrompt --contract 0xYourDeployedChatBotAddress --prompt "You are a helpful AI assistant." --network localhost
+   ```
 
-    If you want to rely on the script's internal defaults for `CHATBOT_CONTRACT_ADDRESS`, `NEW_SYSTEM_PROMPT`, and `OWNER_PRIVATE_KEY` (for local testing ONLY for the private key), you can simplify:
-    ```bash
-    export RPC_URL="http://localhost:8545"
-    # Ensure OWNER_PRIVATE_KEY is set if not using the default, or if default is not desired.
-    # export OWNER_PRIVATE_KEY="0xYourActualOwnerPrivateKey"
-
-
-    forge script contracts/script/SetSystemPrompt.s.sol:SetSystemPrompt \
-        --rpc-url $RPC_URL \
-        --broadcast 
-    # This relies on vm.env...Or("OWNER_PRIVATE_KEY", DEFAULT_OWNER_PRIVATE_KEY) for the broadcast.
-    # For clarity and safety, explicitly setting OWNER_PRIVATE_KEY env var or using --private-key CLI arg is recommended for non-default keys.
-    ```
+Note: Ensure that the account configured in your Hardhat network settings has owner permissions for the ChatBot contract, as only the owner can update the system prompt.
