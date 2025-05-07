@@ -48,10 +48,10 @@ export const Layout: FC = () => {
             <Link to="/" className={classes.logoLink}>
               <LogoIcon />
             </Link>
-            <nav className={classes.navigation}> {/* New middle section */}
+            <nav className={classes.navigation}>
               <AdminButton />
             </nav>
-            <div className={classes.walletSection}> {/* Dedicated section for wallet */}
+            <div className={classes.walletSection}>
               <ConnectWallet inline={isMobileScreen} />
             </div>
           </header>
