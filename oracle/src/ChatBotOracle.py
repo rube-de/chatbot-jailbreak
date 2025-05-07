@@ -89,7 +89,22 @@ class ChatBotOracle:
 
     def ask_chat_bot(self, prompts: list[str], answers: list[(int, str)]) -> str:
         try:
+            # Retrieve the system prompt from the contract
+            system_prompt_text = ""
+            try:
+                system_prompt_text = self.contract.functions.getSystemPrompt().call()
+                if self.debug_mode and system_prompt_text:
+                    print(f"Retrieved system prompt: '{system_prompt_text}'")
+            except Exception as e:
+                print(f"Error retrieving system prompt: {e}. Proceeding without it.")
+
             messages = []
+            if system_prompt_text:
+                messages.append({
+                    'role': 'system',
+                    'content': system_prompt_text
+                })
+
             # Create a dictionary for quick lookup of answers by prompt_id
             answer_map = {prompt_id: answer_content for prompt_id, answer_content in answers}
 

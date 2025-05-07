@@ -12,3 +12,10 @@ docs/
 
 # Dotenv file
 .env
+
+# Hardhat
+artifacts
+cache_hardhat
+
+# Typechain
+typechain
