@@ -20,6 +20,7 @@
   "devDependencies": {
     "@nomicfoundation/hardhat-foundry": "^1.1.3",
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@oasisprotocol/sapphire-hardhat": "^2.22.2",
     "@typechain/hardhat": "^9.1.0",
     "@types/node": "^22.15.14",
     "bech32": "^2.0.0",

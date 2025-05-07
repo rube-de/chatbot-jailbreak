@@ -35,14 +35,14 @@ task("getowner")
         console.log(`Owner address: ${owner}`);
     });
 
-task("getvalue")
+task("getdomain")
     .addOptionalParam("contract", "The contract address", "0x5FbDB2315678afecb367f032d93F642f64180aa3")
     .setAction(async (taskArgs, hre) => {
         const { ethers } = hre;
         const contractAddress = taskArgs.contract;
         const contract = await ethers.getContractAt("ChatBot", contractAddress);
-        const value = await contract.getTestValue();
-        console.log(`Test value: ${value}`);
+        const value = await contract.domain();
+        console.log(`Domain value: ${value}`);
     });
 
 task("setSystemPrompt")

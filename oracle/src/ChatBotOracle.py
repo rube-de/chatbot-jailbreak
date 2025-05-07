@@ -2,7 +2,7 @@ import asyncio
 import requests
 import json
 
-from ollama import Client, ChatResponse
+from ollama import Client, ChatResponse, ResponseError # Added ResponseError
 
 from .ContractUtility import ContractUtility
 from .RoflUtility import RoflUtility
@@ -92,9 +92,12 @@ class ChatBotOracle:
             # Retrieve the system prompt from the contract
             system_prompt_text = ""
             try:
+                print("Attempting to retrieve system prompt...") # New log
                 system_prompt_text = self.contract.functions.getSystemPrompt().call()
                 if self.debug_mode and system_prompt_text:
                     print(f"Retrieved system prompt: '{system_prompt_text}'")
+                elif self.debug_mode and not system_prompt_text: # New conditional log
+                    print("System prompt was retrieved, but it is empty.") # New log
             except Exception as e:
                 print(f"Error retrieving system prompt: {e}. Proceeding without it.")
 
@@ -129,13 +132,34 @@ class ChatBotOracle:
                 host=self.ollama_address,
             )
             response: ChatResponse = client.chat(model='deepseek-r1:1.5b', messages=messages)
+            
+            # This part is only reached if client.chat() succeeds
             if self.debug_mode:
-                print("Response from Ollama:")
-                print(json.dumps(response, indent=2))
+                print("Response from Ollama (message content):")
+                # Safely log the message content, or the whole message if it's a dict
+                if 'message' in response and isinstance(response['message'], dict) and 'content' in response['message']:
+                    print(response['message']['content'])
+                elif 'message' in response: # if message is not a dict but has content
+                     print(str(response['message'])) # fallback to string representation
+                else:
+                    print("Ollama response structure not as expected for logging.")
+
             return response['message']['content']
-        except Exception as e:
-            print(f"Error calling Ollama API: {e}")
-            return "Error generating response"
+        except ResponseError as e_ollama: # Specific Ollama error
+            print(f"Ollama API ResponseError:")
+            if hasattr(e_ollama, 'status_code'):
+                print(f"  Status Code: {e_ollama.status_code}")
+            if hasattr(e_ollama, 'error'):
+                print(f"  Error: {e_ollama.error}")
+            else:
+                print(f"  Raw Ollama error: {e_ollama}")
+            return "Error generating response from Ollama (API ResponseError)"
+        except Exception as e_generic: # Generic error
+            print(f"Error calling Ollama API (generic exception): {e_generic}")
+            # Attempt to see if the generic exception object has more details
+            if hasattr(e_generic, 'args') and e_generic.args:
+                print(f"  Exception args: {e_generic.args}")
+            return "Error generating response (generic exception)"
 
     def submit_answer(self, answer: str, prompt_id: int, address: str):
         # Set a message

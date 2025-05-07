@@ -1,5 +1,6 @@
 // #region config-preamble
 import { HardhatUserConfig } from "hardhat/config";
+import "@oasisprotocol/sapphire-hardhat";
 import "@nomicfoundation/hardhat-toolbox";
 import "@nomicfoundation/hardhat-foundry";
 import { HDAccountsUserConfig } from 'hardhat/types'
