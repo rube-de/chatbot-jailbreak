@@ -16,6 +16,9 @@ docs/
 # Hardhat
 artifacts
 cache_hardhat
-
-# Typechain
 typechain
+node_modules/
+typechain-types/
+hardhat.config.ts.backup*
+coverage.json
+coverage/

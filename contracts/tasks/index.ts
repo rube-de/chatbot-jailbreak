@@ -58,3 +58,39 @@ task("setSystemPrompt")
         await tx.wait();
         console.log(`System prompt set to: ${prompt}`);
     });
+
+task("deploy-gasless").setAction(async (_args, hre) => {
+    const [owner] = await hre.ethers.getSigners();
+    const Gasless = await hre.ethers.getContractFactory("Gasless");
+    const gasless = await Gasless.deploy(owner.address);
+    await gasless.waitForDeployment();
+    console.log(`Gasless deployed to: ${await gasless.getAddress()}`);
+    return gasless.target;
+});
+
+task("deploy-t").setAction(async (_args, hre) => {
+    const [owner] = await hre.ethers.getSigners();
+    const gaslessProxy = await hre.ethers.deployContract("Gasless", [owner]);
+    await gaslessProxy.waitForDeployment();
+    console.log(`Gasless deployed to: ${await gaslessProxy.getAddress()}`);
+    return gaslessProxy.target;
+});
+
+task("getNonce")
+    .addParam("address", "The address of the Gasless contract")
+    .setAction(async (taskArgs, hre) => {
+        const gasless = await hre.ethers.getContractAt("Gasless", taskArgs.address);
+        try {
+            console.log("Calling getNonce()...");
+            const nonce = await gasless.getNonce();
+            console.log("Successfully retrieved nonce:", nonce.toString());
+        } catch (error) {
+            console.error("Error calling getNonce():", error);
+        }
+});
+
+task("full-gasless").setAction(async (_args, hre) => {
+    await hre.run("compile");
+    const address = await hre.run("deploy");
+    await hre.run("getNonce", { address });
+});
