@@ -30,6 +30,8 @@ export interface Web3ProviderContext {
   getPromptsAnswers: () => Promise<PromptsAnswers | null>
   ask: (prompt: string) => Promise<void>
   clear: () => Promise<void>
+  getOwner: () => Promise<string | null>
+  setSystemPrompt: (newPrompt: string) => Promise<void>
 }
 
 export const Web3Context = createContext<Web3ProviderContext>({} as Web3ProviderContext)
