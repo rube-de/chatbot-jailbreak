@@ -37,9 +37,9 @@ contract ChatBotGasless is SiweAuth, Ownable {
     event PromptSubmitted(address indexed sender);
     event AnswerSubmitted(address indexed sender);
     event SignerInitialized(address indexed signerAddress);
-    event TransactionProxied(address indexed target, address indexed originalUser, bool success);
-    event ContractFunded(address indexed funder, uint256 amount); // For funds sent to this contract
-    event WithdrawalCompleted(address indexed recipient, uint256 amount); // For owner withdrawing from contract
+    event TransactionProxied(address indexed target, bool success);
+    event ContractFunded(address indexed funder, uint256 amount);
+    event WithdrawalCompleted(address indexed recipient, uint256 amount);
 
     // --- Errors from ChatBot ---
     error InvalidPromptId();
@@ -139,7 +139,8 @@ contract ChatBotGasless is SiweAuth, Ownable {
     }
 
     // --- Internal Prompt Logic ---
-    function _appendPrompt(address user, string memory prompt) internal {
+    function _appendPrompt(address user, string memory prompt) public {
+        if (msg.sender != address(this)) revert Gasless__CallerNotSignerAddress();
         _prompts[user].push(prompt);
         emit PromptSubmitted(user);
     }
@@ -155,13 +156,14 @@ contract ChatBotGasless is SiweAuth, Ownable {
         if (siweUser != userAddress) revert ChatBotGasless__UserMismatch();
 
         bytes memory callDataForAppend = abi.encodeWithSelector(
-            IChatBot._appendPrompt.selector,
+            // IChatBot._appendPrompt.selector,
+            this._appendPrompt.selector,
             userAddress,
             prompt
         );
 
         // originalUser, targetContract, actionCallData
-        bytes memory dataForProxyFunction = abi.encode(userAddress, address(this), callDataForAppend);
+        bytes memory dataForProxyFunction = abi.encode(address(this), callDataForAppend);
 
         return EIP155Signer.sign(
             kp.addr,
@@ -173,6 +175,7 @@ contract ChatBotGasless is SiweAuth, Ownable {
                 to: address(this),
                 value: 0,
                 data: encryptCallData(abi.encodeCall(this.proxy, (dataForProxyFunction))),
+                // data: abi.encodeCall(this.proxy, (dataForProxyFunction)), // plain tx
                 chainId: block.chainid
             })
         );
@@ -182,9 +185,9 @@ contract ChatBotGasless is SiweAuth, Ownable {
     function proxy(bytes memory data) external payable {
         if (msg.sender != kp.addr) revert Gasless__CallerNotSignerAddress();
 
-        (address originalUser, address target, bytes memory actionCallData) = abi.decode(
+        (address target, bytes memory actionCallData) = abi.decode(
             data,
-            (address, address, bytes)
+            (address, bytes)
         );
 
         if (target != address(this)) {
@@ -197,7 +200,7 @@ contract ChatBotGasless is SiweAuth, Ownable {
 
         (bool success, ) = address(this).call{value: msg.value}(actionCallData); // Calls _appendPromptInternal
 
-        emit TransactionProxied(target, originalUser, success);
+        emit TransactionProxied(target, success);
 
         if (!success) {
             revert ProxiedCallFailed();
