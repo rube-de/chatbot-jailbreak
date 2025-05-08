@@ -5,3 +5,8 @@
 
 # Node modules
 node_modules/
+
+# hardhat
+artifacts/
+cache_hardhat/
+typechain/
