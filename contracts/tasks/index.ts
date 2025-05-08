@@ -104,6 +104,22 @@ task("deploy-chatbot-gasless")
         return chatBot.target;
     });
 
+task("chatbot-gasless-fund")
+    .addOptionalParam("domain", "The domain name", "localhost")
+    .addOptionalParam("roflappid", "The ROFL app ID", "rofl1qrtetspnld9efpeasxmryl6nw9mgllr0euls3dwn")
+    .addOptionalParam("oracle", "The oracle address", "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266")
+    .addOptionalParam("owner", "The owner address", "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266")
+    .addOptionalParam("amount", "The amount to fund", "1")
+    .setAction(async (taskArgs, hre) => {
+        hre.run("compile");
+        const domain = taskArgs.domain;
+        const roflappid = taskArgs.roflappid;
+        const oracle = taskArgs.oracle;
+        const owner = taskArgs.owner;
+        const conrtactAddress = hre.run("deploy-chatbot-gasless", { domain, roflappid, oracle, owner });
+        hre.run("fundsigner", { address: conrtactAddress, amount: taskArgs.amount });
+    });
+        
 task("signin")
     .addOptionalParam("account", "The account index", "0")
     .addOptionalParam("contract", "The contract address", "0x5FbDB2315678afecb367f032d93F642f64180aa3")
