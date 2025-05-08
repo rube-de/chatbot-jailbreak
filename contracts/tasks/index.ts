@@ -82,7 +82,7 @@ task("fundsigner")
 // chatbot gasless
 task("deploy-chatbot-gasless")
     .addOptionalParam("domain", "The domain name", "localhost")
-    .addOptionalParam("roflappid", "The ROFL app ID", "rofl1qrtetspnld9efpeasxmryl6nw9mgllr0euls3dwn")
+    .addOptionalParam("roflappid", "The ROFL app ID", "rofl1qqsjkxk7antkn27qgxc8vcgt46mklkvgccshylm3")
     .addOptionalParam("oracle", "The oracle address", "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266")
     .addOptionalParam("owner", "The owner address", "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266")
     .setAction(async (taskArgs, hre) => {

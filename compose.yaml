@@ -9,9 +9,9 @@ services:
 
   oracle:
     environment:
-      CONTRACT_ADDRESS: 0x5FbDB2315678afecb367f032d93F642f64180aa3
-    image: "ghcr.io/rube-de/chatbot-jailbreak:0.1.24"
-    entrypoint: /bin/sh -c 'python main.py --network https://testnet.sapphire.oasis.io --ollama-address http://ollama:11434 0xcD0F0eFfAFAe5F5439f24F01ab69b2CBaC14cC56'
+      CONTRACT_ADDRESS: 0xBB333702465ea39eF0367490550C30B2515eE2CD
+    image: "ghcr.io/rube-de/chatbot-jailbreak:0.1.25"
+    entrypoint: /bin/sh -c 'python main.py --network https://testnet.sapphire.oasis.io --ollama-address http://ollama:11434 0xBB333702465ea39eF0367490550C30B2515eE2CD'
     restart: on-failure
     volumes:
       - /run/rofl-appd.sock:/run/rofl-appd.sock
