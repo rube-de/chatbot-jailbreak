@@ -116,8 +116,8 @@ task("chatbot-gasless-fund")
         const roflappid = taskArgs.roflappid;
         const oracle = taskArgs.oracle;
         const owner = taskArgs.owner;
-        const contractAddress = hre.run("deploy-chatbot-gasless", { domain, roflappid, oracle, owner });
-        hre.run("fundsigner", { address: contractAddress, amount: taskArgs.amount });
+        const contractAddress = await hre.run("deploy-chatbot-gasless", { domain, roflappid, oracle, owner });
+        await hre.run("fundsigner", { address: contractAddress, amount: taskArgs.amount });
     });
         
 task("signin")
