@@ -16,7 +16,8 @@ export const HomePage: FC = () => {
   const {
     state: { isConnected, isInteractingWithChain, authInfo },
     getPromptsAnswers: web3GetPromptsAnswers,
-    ask: web3Ask,
+    // ask: web3Ask, // Old function for direct prompt submission
+    submitPromptGasless: web3SubmitPromptGasless, // New gasless submission function
     clear: web3Clear,
   } = useWeb3()
   const [isWaitingChatBot, setIsWaitingChatBot] = useState(false)
@@ -63,7 +64,9 @@ export const HomePage: FC = () => {
   }, [isConnected, authInfo])
 
   const handleAsk = async () => {
-    if (isWaitingChatBot) return
+    if (isWaitingChatBot) {
+      return;
+    }
 
     setPromptValueError(undefined)
 
@@ -76,7 +79,8 @@ export const HomePage: FC = () => {
     retryAbortControllerRef.current = new AbortController()
 
     try {
-      await web3Ask(promptValue)
+      // Use the new gasless submission function
+      await web3SubmitPromptGasless(promptValue)
 
       setIsWaitingChatBot(true)
       setTempPrompt(promptValue)
@@ -109,8 +113,9 @@ export const HomePage: FC = () => {
       }
     } catch (ex) {
       if (!retryAbortControllerRef.current?.signal.aborted) {
-        setPromptValue(promptValue)
-        setPromptValueError((ex as Error).message)
+        // setPromptValue(promptValue) // Re-setting promptValue on error might not be desired UX
+        const errorMessage = (ex as Error).message;
+        setPromptValueError(errorMessage);
       }
     } finally {
       setIsWaitingChatBot(false)

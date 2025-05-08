@@ -60,42 +60,24 @@ task("setSystemPrompt")
         console.log(`System prompt set to: ${prompt}`);
     });
 
-task("deploy-gasless").setAction(async (_args, hre) => {
-    const [owner] = await hre.ethers.getSigners();
-    const Gasless = await hre.ethers.getContractFactory("Gasless");
-    const gasless = await Gasless.deploy(owner.address);
-    await gasless.waitForDeployment();
-    console.log(`Gasless deployed to: ${await gasless.getAddress()}`);
-    return gasless.target;
-});
-
-task("deploy-t").setAction(async (_args, hre) => {
-    const [owner] = await hre.ethers.getSigners();
-    const gaslessProxy = await hre.ethers.deployContract("Gasless", [owner]);
-    await gaslessProxy.waitForDeployment();
-    console.log(`Gasless deployed to: ${await gaslessProxy.getAddress()}`);
-    return gaslessProxy.target;
-});
-
-task("getNonce")
-    .addParam("address", "The address of the Gasless contract")
+task("fundsigner")
+    .addOptionalParam("address", "The address of the Gasless contract", "0x5FbDB2315678afecb367f032d93F642f64180aa3")
+    .addOptionalParam("amount", "The amount to fund", "1")
     .setAction(async (taskArgs, hre) => {
-        const gasless = await hre.ethers.getContractAt("Gasless", taskArgs.address);
-        try {
-            console.log("Calling getNonce()...");
-            const nonce = await gasless.getNonce();
-            console.log("Successfully retrieved nonce:", nonce.toString());
-        } catch (error) {
-            console.error("Error calling getNonce():", error);
-        }
-});
-
-task("full-gasless").setAction(async (_args, hre) => {
-    await hre.run("compile");
-    const address = await hre.run("deploy-gasless");
-    await hre.run("getNonce", { address });
-});
-
+        const { ethers } = hre;
+        const gasless = await ethers.getContractAt("ChatBotGasless", taskArgs.address);
+        const [owner] = await ethers.getSigners();
+        const gaslessSigner = await gasless.getSignerAddress();
+        const amount = ethers.parseEther(taskArgs.amount);
+        const tx = await owner.sendTransaction({
+            to: gaslessSigner,
+            value: amount,
+        });
+        await tx.wait();
+        console.log(`Funded ${taskArgs.amount} ETH to ${gaslessSigner}`);
+        console.log(`Transaction hash: ${tx.hash}`);
+        return tx.hash;
+    });
 
 // chatbot gasless
 task("deploy-chatbot-gasless")
