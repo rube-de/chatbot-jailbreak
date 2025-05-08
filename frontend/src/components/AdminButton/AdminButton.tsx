@@ -13,37 +13,37 @@ export const AdminButton: FC = () => {
   useEffect(() => {
     // Ensure getOwner is defined before proceeding
     if (!getOwner) {
-      console.log('[AdminButton] getOwner is not available yet.');
+      // console.log('[AdminButton] getOwner is not available yet.');
       setIsLoading(false); // Can't do anything if getOwner isn't there
       return;
     }
 
     const checkOwner = async () => {
-      console.log('[AdminButton] checkOwner called. web3State.account:', web3State.account);
+      // console.log('[AdminButton] checkOwner called. web3State.account:', web3State.account);
       if (web3State.account) {
         // setIsLoading(true); // Re-enable to show loading during async owner check
         try {
           const ownerAddress = await getOwner();
-          console.log('[AdminButton] ownerAddress from getOwner():', ownerAddress);
+          // console.log('[AdminButton] ownerAddress from getOwner():', ownerAddress);
           if (ownerAddress) { // Ensure ownerAddress is not null
             const isMatch = web3State.account.toLowerCase() === ownerAddress.toLowerCase();
-            console.log('[AdminButton] Comparison:', web3State.account.toLowerCase(), '===', ownerAddress.toLowerCase(), 'Result:', isMatch);
+            // console.log('[AdminButton] Comparison:', web3State.account.toLowerCase(), '===', ownerAddress.toLowerCase(), 'Result:', isMatch);
             setIsOwner(isMatch);
           } else {
-            console.log('[AdminButton] ownerAddress is null. Setting isOwner to false.');
+            // console.log('[AdminButton] ownerAddress is null. Setting isOwner to false.');
             setIsOwner(false);
           }
         } catch (error) {
-          console.error('[AdminButton] Failed to get owner:', error);
+          // console.error('[AdminButton] Failed to get owner:', error);
           setIsOwner(false);
         } finally {
           // Only set isLoading to false after the check is complete
           setIsLoading(false);
-          console.log('[AdminButton] Finally block. isLoading set to false.');
+          // console.log('[AdminButton] Finally block. isLoading set to false.');
         }
       } else {
         // Account is not available
-        console.log('[AdminButton] web3State.account is falsy. Setting isOwner to false, isLoading to false.');
+        // console.log('[AdminButton] web3State.account is falsy. Setting isOwner to false, isLoading to false.');
         setIsOwner(false);
         setIsLoading(false);
       }
@@ -53,7 +53,7 @@ export const AdminButton: FC = () => {
   }, [web3State.account, getOwner]); // getOwner added as dependency
 
   // Log state before returning
-  console.log('[AdminButton] Rendering. isLoading:', isLoading, 'isOwner:', isOwner);
+  // console.log('[AdminButton] Rendering. isLoading:', isLoading, 'isOwner:', isOwner);
 
   if (isLoading) {
     return <div className={classes.loading}>Loading...</div>; // Or a spinner component

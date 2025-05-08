@@ -1,8 +1,8 @@
-// #region config-preamble
 import { HardhatUserConfig } from "hardhat/config";
 import "@oasisprotocol/sapphire-hardhat";
 import "@nomicfoundation/hardhat-toolbox";
 import "@nomicfoundation/hardhat-foundry";
+import "@nomicfoundation/hardhat-ethers";
 import { HDAccountsUserConfig } from 'hardhat/types'
 
 import "./tasks"
@@ -19,7 +19,15 @@ const TEST_HDWALLET: HDAccountsUserConfig = {
 const accounts = process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : TEST_HDWALLET;
 
 const config: HardhatUserConfig = {
-  solidity: "0.8.28",
+  solidity: {
+    version: "0.8.28",
+    settings: {
+      optimizer: {
+        enabled: true,
+        runs: 10,
+      },
+    },
+  },
   networks: {
     sapphire: {
       url: "https://sapphire.oasis.io",
