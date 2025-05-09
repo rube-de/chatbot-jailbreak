@@ -62,7 +62,7 @@ export const ConnectWallet: FC<Props> = ({ inline }) => {
 
   return (
     <>
-      {!isConnected && (
+      {/* {!isConnected && (
         <a href={METAMASK_HOME_PAGE_URL} target={'_blank'} rel={'noopener noreferrer'}>
           <Button
             className={StringUtils.clsx(classes.connectWalletBtn, inline ? classes.inline : undefined)}
@@ -73,7 +73,7 @@ export const ConnectWallet: FC<Props> = ({ inline }) => {
             Install MetaMask
           </Button>
         </a>
-      )}
+      )} */}
       {!isConnected && isUnknownNetwork && (
         <Button
           className={StringUtils.clsx(classes.connectWalletBtn, inline ? classes.inline : undefined)}
