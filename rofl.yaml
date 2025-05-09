@@ -1,5 +1,5 @@
 name: chatbot-jailbreak
-version: 0.1.27
+version: 0.1.28
 tee: tdx
 kind: container
 resources:
@@ -21,7 +21,7 @@ deployments:
     network: testnet
     paratime: sapphire
     admin: myaccount
-    oci_repository: rofl.sh/01381ea2-2d1c-40e9-a83c-c52881ccf7cf:1746815085
+    oci_repository: rofl.sh/f67b5afb-54a3-4b2c-84ae-b1112d60f525:1746816438
     trust_root:
       height: 26505150
       hash: 0ac9304bcc4d0b0870726ec6f76b1acfc175cc584e028c8bc3f96420452c2dfa
@@ -32,8 +32,8 @@ deployments:
           min_tcb_evaluation_data_number: 18
           tdx: {}
       enclaves:
-        - id: 6TD23T/78865NbFbfc8jg4v5AUQ3s4eFfBhRIX53OAYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==
-        - id: AX7/hE+CSm5lK+bmD1hFPOecPJVDYQmrobeRqc+CBPcAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==
+        - id: G0rr+k2uyYvI5Pd0hAndBcR4Fv8A8yja51r7ku5/tDwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==
+        - id: Bi6Y5IIyJfC7mS5DcVLcxKhivmW7S+MzUoMaRrAHA/gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==
       endorsements:
         - any: {}
       fees: endorsing_node
@@ -42,4 +42,4 @@ deployments:
       default:
         provider: oasis1qrxhk2aqwq7g5fq85a89yv2khdgn2wzccqhg2sal
         offer: large
-        id: "0000000000000016"
+        id: "0000000000000017"
