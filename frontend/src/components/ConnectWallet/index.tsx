@@ -2,7 +2,7 @@ import { FC, useEffect, useState } from 'react'
 import { useWeb3 } from '../../hooks/useWeb3'
 import { METAMASK_HOME_PAGE_URL } from '../../constants/config'
 import { Button } from '../Button'
-import { toErrorString, UnknownNetworkError } from '../../utils/errors'
+import { UnknownNetworkError } from '../../utils/errors'
 import { ConnectedAccount } from '../ConnectedAccount'
 import { useAppState } from '../../hooks/useAppState'
 import classes from './index.module.css'
@@ -18,14 +18,12 @@ export const ConnectWallet: FC<Props> = ({ inline }) => {
   const { setAppError } = useAppState()
 
   const [isLoading, setIsLoading] = useState(false)
-  const [providerAvailable, setProviderAvailable] = useState(true)
   const [isUnknownNetwork, setIsUnknownNetwork] = useState(false)
 
   const {
     state: { isConnected, account, chainName },
     connectWallet,
     switchNetwork,
-    isProviderAvailable,
   } = useWeb3()
 
   useEffect(() => {
@@ -33,19 +31,6 @@ export const ConnectWallet: FC<Props> = ({ inline }) => {
       navigate('/dashboard')
     }
   }, [isConnected, navigate])
-
-  useEffect(() => {
-    const init = async () => {
-      setIsLoading(true)
-      setProviderAvailable(await isProviderAvailable())
-      setIsLoading(false)
-    }
-
-    init().catch(ex => {
-      setAppError(toErrorString(ex as Error))
-    })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
 
   const handleConnectWallet = async () => {
     setIsLoading(true)
@@ -77,7 +62,7 @@ export const ConnectWallet: FC<Props> = ({ inline }) => {
 
   return (
     <>
-      {!isConnected && !providerAvailable && (
+      {!isConnected && (
         <a href={METAMASK_HOME_PAGE_URL} target={'_blank'} rel={'noopener noreferrer'}>
           <Button
             className={StringUtils.clsx(classes.connectWalletBtn, inline ? classes.inline : undefined)}
@@ -89,7 +74,7 @@ export const ConnectWallet: FC<Props> = ({ inline }) => {
           </Button>
         </a>
       )}
-      {!isConnected && providerAvailable && isUnknownNetwork && (
+      {!isConnected && isUnknownNetwork && (
         <Button
           className={StringUtils.clsx(classes.connectWalletBtn, inline ? classes.inline : undefined)}
           color="primary"
@@ -100,7 +85,7 @@ export const ConnectWallet: FC<Props> = ({ inline }) => {
           Switch Network
         </Button>
       )}
-      {!isConnected && providerAvailable && !isUnknownNetwork && (
+      {!isConnected && !isUnknownNetwork && (
         <Button
           className={StringUtils.clsx(classes.connectWalletBtn, inline ? classes.inline : undefined)}
           color="primary"
