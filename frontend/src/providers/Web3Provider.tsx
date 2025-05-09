@@ -2,17 +2,16 @@ import { FC, PropsWithChildren, useCallback, useEffect, useState } from 'react'
 import { CHAINS, VITE_NETWORK } from '../constants/config'
 import { handleKnownErrors, handleKnownEthersErrors, UnknownNetworkError } from '../utils/errors'
 import { Web3Context, Web3ProviderContext, Web3ProviderState } from './Web3Context'
-import { useEIP1193 } from '../hooks/useEIP1193'
-import { BrowserProvider, Contract, EthersError, JsonRpcProvider, Signature } from 'ethers'
+import {BrowserProvider, Contract, Eip1193Provider, EthersError, JsonRpcProvider, Signature} from 'ethers'
 import { SiweMessage } from 'siwe'
 import { wrapEthersSigner, NETWORKS, wrapEthersProvider } from '@oasisprotocol/sapphire-ethers-v6'
 import * as ChatBotGaslessAbi from '../../../contracts/out/ChatBotGasless.sol/ChatBotGasless.json'
 import { Answer, PromptsAnswers } from '../types'
 import { usePrevious } from '../hooks/usePrevious'
+import {useAppKitAccount, useAppKitProvider} from "@reown/appkit/react";
+import {useWalletConnect} from "../hooks/useWalletConnect";
 
 const { VITE_CONTRACT_ADDR } = import.meta.env
-
-let EVENT_LISTENERS_INITIALIZED = false
 
 const web3ProviderInitialState: Web3ProviderState = {
   isConnected: false,
@@ -31,11 +30,9 @@ const web3ProviderInitialState: Web3ProviderState = {
 }
 
 export const Web3ContextProvider: FC<PropsWithChildren> = ({ children }) => {
-  const {
-    isEIP1193ProviderAvailable,
-    connectWallet: connectWalletEIP1193,
-    switchNetwork: switchNetworkEIP1193,
-  } = useEIP1193()
+  const { connectWallet: wcConnectWallet, switchNetwork: wcSwitchNetwork } = useWalletConnect()
+  const { walletProvider } = useAppKitProvider('eip155')
+  const { address } = useAppKitAccount({namespace: 'eip155'})
 
   const [state, setState] = useState<Web3ProviderState>({
     ...web3ProviderInitialState,
@@ -78,26 +75,6 @@ export const Web3ContextProvider: FC<PropsWithChildren> = ({ children }) => {
     []
   )
 
-  const _connectionChanged = (isConnected: boolean) => {
-    setState(prevState => ({
-      ...prevState,
-      isConnected,
-    }))
-  }
-
-  const _accountsChanged = useCallback((accounts: string[]) => {
-    if (accounts.length <= 0) {
-      _connectionChanged(false)
-      return
-    }
-
-    const [account] = accounts
-    setState(prevState => ({
-      ...prevState,
-      account,
-    }))
-  }, [])
-
   const _setNetworkSpecificVars = (chainId: bigint, browserProvider = state.browserProvider!): void => {
     if (!browserProvider) {
       throw new Error('[Web3Context] Browser provider is required!')
@@ -117,32 +94,6 @@ export const Web3ContextProvider: FC<PropsWithChildren> = ({ children }) => {
       nativeCurrency,
     }))
   }
-
-  const _chainChanged = useCallback((chainId: number) => {
-    setState(prevState => {
-      if (prevState.isConnected && prevState.chainId !== BigInt(chainId)) {
-        window.location.reload()
-      }
-      return prevState
-    })
-  }, [])
-
-  const _connect = useCallback(() => _connectionChanged(true), [])
-  const _disconnect = useCallback(() => _connectionChanged(false), [])
-
-  const _addEventListenersOnce = useCallback(
-    (ethProvider: typeof window.ethereum) => {
-      if (EVENT_LISTENERS_INITIALIZED) {
-        return
-      }
-      ethProvider?.on?.('accountsChanged', _accountsChanged)
-      ethProvider?.on?.('chainChanged', _chainChanged)
-      ethProvider?.on?.('connect', _connect)
-      ethProvider?.on?.('disconnect', _disconnect)
-      EVENT_LISTENERS_INITIALIZED = true
-    },
-    [_accountsChanged, _chainChanged, _connect, _disconnect]
-  )
 
   const _getUnwrappedSigner = async () => {
     const { browserProvider } = state
@@ -222,7 +173,6 @@ export const Web3ContextProvider: FC<PropsWithChildren> = ({ children }) => {
         chainId,
         isSapphire: !!NETWORKS[Number(chainId)],
       }))
-      _addEventListenersOnce(window.ethereum)
     } catch (ex) {
       console.error("Error during _init:", ex);
       setState(prevState => ({
@@ -237,20 +187,18 @@ export const Web3ContextProvider: FC<PropsWithChildren> = ({ children }) => {
     }
   }
 
-  const isProviderAvailable = async () => {
-    return isEIP1193ProviderAvailable()
-  }
+  useEffect(() => {
+    if (walletProvider && address) {
+      _init(address, walletProvider as BrowserProvider & Eip1193Provider)
+    }
+  }, [walletProvider]);
 
   const connectWallet = async () => {
-    const account = await connectWalletEIP1193()
-    if (!account) {
-      throw new Error('[Web3Context] Request account failed!')
-    }
-    await _init(account, window.ethereum)
+    await wcConnectWallet()
   }
 
-  const switchNetwork = async (chainId = VITE_NETWORK) => {
-    return await switchNetworkEIP1193(chainId)
+  const switchNetwork = async () => {
+    return await wcSwitchNetwork()
   }
 
   const getTransaction = async (txHash: string) => {
@@ -381,7 +329,6 @@ export const Web3ContextProvider: FC<PropsWithChildren> = ({ children }) => {
 
   const providerState: Web3ProviderContext = {
     state,
-    isProviderAvailable,
     connectWallet,
     switchNetwork,
     getTransaction,

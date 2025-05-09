@@ -26,7 +26,6 @@ export interface Web3ProviderContext {
   switchNetwork: (chainId?: bigint) => Promise<void>
   getTransaction: (txHash: string) => Promise<TransactionResponse | null>
   getGasPrice: () => Promise<bigint>
-  isProviderAvailable: () => Promise<boolean>
   getPromptsAnswers: () => Promise<PromptsAnswers | null>
   ask: (prompt: string) => Promise<void>
   submitPromptGasless: (prompt: string) => Promise<void>; // Added new function for gasless submission
