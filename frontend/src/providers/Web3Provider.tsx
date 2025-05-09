@@ -5,7 +5,7 @@ import { Web3Context, Web3ProviderContext, Web3ProviderState } from './Web3Conte
 import {BrowserProvider, Contract, Eip1193Provider, EthersError, JsonRpcProvider, Signature} from 'ethers'
 import { SiweMessage } from 'siwe'
 import { wrapEthersSigner, NETWORKS, wrapEthersProvider } from '@oasisprotocol/sapphire-ethers-v6'
-import * as ChatBotGaslessAbi from '../../../contracts/out/ChatBotGasless.sol/ChatBotGasless.json'
+import * as ChatBotGaslessAbi from '../../abi/ChatBotGasless.sol/ChatBotGasless.json'
 import { Answer, PromptsAnswers } from '../types'
 import { usePrevious } from '../hooks/usePrevious'
 import {useAppKitAccount, useAppKitProvider} from "@reown/appkit/react";
