@@ -18,6 +18,11 @@ export const Layout: FC = () => {
     setShowFaucetNotification,
   } = useAppState()
 
+  // default state for showFaucetNotification false
+  if (VITE_NETWORK === 23293n || VITE_NETWORK === 23295n || VITE_NETWORK === 23294n) {
+    setShowFaucetNotification(false)
+  }
+
   return (
     <LayoutBase
       header={
