@@ -106,7 +106,8 @@ task("deploy-chatbot-gasless")
 
 task("chatbot-gasless-fund")
     .addOptionalParam("domain", "The domain name", "localhost")
-    .addOptionalParam("roflappid", "The ROFL app ID", "rofl1qrtetspnld9efpeasxmryl6nw9mgllr0euls3dwn")
+    // .addOptionalParam("roflappid", "The ROFL app ID", "rofl1qrtetspnld9efpeasxmryl6nw9mgllr0euls3dwn")
+    .addOptionalParam("roflappid", "The ROFL app ID", "rofl1qr4rh27vg0wh992hgyhp2385r4ky4cn9ystrwt3e") // open router
     .addOptionalParam("oracle", "The oracle address", "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266")
     .addOptionalParam("owner", "The owner address", "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266")
     .addOptionalParam("amount", "The amount to fund", "1")
