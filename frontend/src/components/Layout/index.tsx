@@ -27,7 +27,7 @@ export const Layout: FC = () => {
               <p>
                 Don't have any TEST tokens on Sapphire Testnet? Get some from our{' '}
                 <a
-                  href="https://faucet.testnet.oasis.dev/?paratime=sapphire"
+                  href="https://faucet.testnet.oasis.io/?paratime=sapphire"
                   target="_blank"
                   rel="noopener noreferrer"
                 >

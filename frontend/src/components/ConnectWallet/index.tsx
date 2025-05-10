@@ -1,6 +1,6 @@
 import { FC, useEffect, useState } from 'react'
 import { useWeb3 } from '../../hooks/useWeb3'
-import { METAMASK_HOME_PAGE_URL } from '../../constants/config'
+// import { METAMASK_HOME_PAGE_URL } from '../../constants/config'
 import { Button } from '../Button'
 import { UnknownNetworkError } from '../../utils/errors'
 import { ConnectedAccount } from '../ConnectedAccount'

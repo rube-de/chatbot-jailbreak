@@ -52,7 +52,7 @@ export const CHAINS: Map<bigint, AddEthereumChainParameter> = new Map([
       chainId: '0x5aff',
       chainName: 'Oasis Sapphire Testnet',
       nativeCurrency: { name: 'TEST', symbol: 'TEST', decimals: 18 },
-      rpcUrls: ['https://testnet.sapphire.oasis.dev/', 'wss://testnet.sapphire.oasis.dev/ws'],
+      rpcUrls: ['https://testnet.sapphire.oasis.io/', 'wss://testnet.sapphire.oasis.io/ws'],
       blockExplorerUrls: ['https://explorer.oasis.io/testnet/sapphire'],
     },
   ],
