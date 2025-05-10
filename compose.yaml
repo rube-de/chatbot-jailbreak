@@ -1,9 +1,11 @@
 services:
   oracle:
-    image: "ghcr.io/rube-de/chatbot-jailbreak:or"
+    image: "ghcr.io/rube-de/chatbot-jailbreak:or.1.0"
+    build:
+      dockerfile: Dockerfile.oracle
     environment:
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
-      - CONTRACT_ADDRESS=0xBB333702465ea39eF0367490550C30B2515eE2CD
+      - CONTRACT_ADDRESS=0xF5B786eEb04181AE47C5765d605F778EC0801a6f
     # Removed --ollama-address from entrypoint
     entrypoint: /bin/sh -c 'python main.py --network https://testnet.sapphire.oasis.io $${CONTRACT_ADDRESS}'
     restart: on-failure
