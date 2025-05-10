@@ -57,36 +57,47 @@ class ChatBotOracle:
             # Depending on the error, might need to exit or raise
             raise # Re-raise critical init errors
 
-
     def set_oracle_address(self):
-        """Checks if the contract's oracle address matches ours and updates it if necessary."""
-        print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Checking contract oracle address...", flush=True)
-        try:
-            current_block = self.w3.eth.block_number # Simple check for connection
-            print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Current block number: {current_block}", flush=True)
+        contract_addr = self.contract.functions.oracle().call()
+        if  contract_addr != self.w3.eth.default_account:
+            print(f"Contract oracle {contract_addr} does not match our address {self.w3.eth.default_account}, updating...",)
+            tx_params = self.contract.functions.setOracle(self.w3.eth.default_account).build_transaction({'gasPrice': self.w3.eth.gas_price})
+            tx_hash = self.rofl_utility.submit_tx(tx_params)
+            print(f"Got receipt {tx_hash} {dir(tx_hash)}")
+            tx_receipt = self.w3.eth.wait_for_transaction_receipt(tx_hash)
+            print(f"Updated. Transaction hash: {tx_receipt.transactionHash.hex()}")
+        else:
+            print(f"Contract oracle {contract_addr} matches our address {self.w3.eth.default_account}")
 
-            contract_addr = self.contract.functions.oracle().call()
-            print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Current contract oracle: {contract_addr}", flush=True)
-            print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Our oracle address: {self.account_address}", flush=True)
+    # def set_oracle_address(self):
+    #     """Checks if the contract's oracle address matches ours and updates it if necessary."""
+    #     print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Checking contract oracle address...", flush=True)
+    #     try:
+    #         current_block = self.w3.eth.block_number # Simple check for connection
+    #         print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Current block number: {current_block}", flush=True)
 
-            if contract_addr.lower() != self.account_address.lower():
-                print(f"Contract oracle {contract_addr} does not match our address {self.account_address}, updating...", flush=True)
+    #         contract_addr = self.contract.functions.oracle().call()
+    #         print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Current contract oracle: {contract_addr}", flush=True)
+    #         print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Our oracle address: {self.account_address}", flush=True)
 
-                # Use .transact() to sign with the specific key loaded via ContractUtility/sapphire.wrap
-                print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Building and submitting setOracle transaction via tx submit...", flush=True)
-                tx_params = self.contract.functions.setOracle(self.w3.eth.default_account).build_transaction({'gasPrice': self.w3.eth.gas_price})
-                tx_hash = self.rofl_utility.submit_tx(tx_params)
+    #         if contract_addr.lower() != self.account_address.lower():
+    #             print(f"Contract oracle {contract_addr} does not match our address {self.account_address}, updating...", flush=True)
 
-                print(f"Submitted setOracle transaction. Waiting for receipt... Tx Hash: {tx_hash}", flush=True)
-                # WARNING: wait_for_transaction_receipt is BLOCKING. Okay here as it's startup.
-                tx_receipt = self.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=180) # Increased timeout
-                print(f"Updated. Transaction hash: {tx_receipt.transactionHash.hex()}, Block: {tx_receipt.blockNumber}", flush=True)
-            else:
-                print(f"Contract oracle {contract_addr} matches our address {self.account_address}", flush=True)
-        except Exception as e:
-             print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] ERROR in set_oracle_address: {e}", flush=True)
-             traceback.print_exc()
-             # Decide if this should be fatal or just a warning
+    #             # Use .transact() to sign with the specific key loaded via ContractUtility/sapphire.wrap
+    #             print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Building and submitting setOracle transaction via tx submit...", flush=True)
+    #             tx_params = self.contract.functions.setOracle(self.w3.eth.default_account).build_transaction({'gasPrice': self.w3.eth.gas_price})
+    #             tx_hash = self.rofl_utility.submit_tx(tx_params)
+
+    #             print(f"Submitted setOracle transaction. Waiting for receipt... Tx Hash: {tx_hash}", flush=True)
+    #             # WARNING: wait_for_transaction_receipt is BLOCKING. Okay here as it's startup.
+    #             tx_receipt = self.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=180) # Increased timeout
+    #             print(f"Updated. Transaction hash: {tx_receipt.transactionHash.hex()}, Block: {tx_receipt.blockNumber}", flush=True)
+    #         else:
+    #             print(f"Contract oracle {contract_addr} matches our address {self.account_address}", flush=True)
+    #     except Exception as e:
+    #          print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] ERROR in set_oracle_address: {e}", flush=True)
+    #          traceback.print_exc()
+    #          # Decide if this should be fatal or just a warning
 
 
     async def log_loop(self, poll_interval):
