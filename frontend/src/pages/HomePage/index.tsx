@@ -161,7 +161,7 @@ export const HomePage: FC = () => {
 
   return (
     <div className={classes.homePage}>
-      <Card header={<h2>C10l ChatBot 🤖</h2>}>
+      <Card header={<h2> Try to Jailbreak me 🤖</h2>}>
         {isConnected && (
           <div className={classes.cardContent}>
             <div className={classes.conversation}>
