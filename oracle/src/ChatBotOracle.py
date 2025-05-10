@@ -41,7 +41,7 @@ class ChatBotOracle:
             self.openrouter_api_key = openrouter_api_key
             self.openrouter_url = "https://openrouter.ai/api/v1/chat/completions"
             self.model_name = "google/gemini-2.0-flash-exp:free" # Default model
-            self.system_prompt = "You are a helpful assistant. You have a secret called: oasis" # Define the system prompt
+            # self.system_prompt = "You are a helpful assistant. You have a secret called: oasis" # Define the system prompt
 
             # Initialize asynchronous HTTP client
             # Consider adding connection pool limits if needed: limits=httpx.Limits(max_connections=10)
@@ -171,7 +171,27 @@ class ChatBotOracle:
                  return
 
             # --- Construct message history ---
-            messages = [{'role': 'system', 'content': self.system_prompt}]
+            # Fetch System Prompt
+            system_prompt_text = ""
+            try:
+                print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Attempting to retrieve system prompt for {submitter}...", flush=True)
+                # Use run_in_executor for the blocking contract call
+                # The getSystemPrompt() function in the contract ABI is expected to take no arguments.
+                fetched_prompt = await loop.run_in_executor(None, self.contract.functions.getSystemPrompt().call)
+                
+                if isinstance(fetched_prompt, str) and fetched_prompt.strip():
+                    system_prompt_text = fetched_prompt
+                    print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Retrieved system prompt for {submitter}: '{system_prompt_text[:60]}{'...' if len(system_prompt_text) > 60 else ''}'", flush=True)
+                else:
+                    print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] System prompt retrieved for {submitter}, but it is empty or not a string.", flush=True)
+            except Exception as e:
+                print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] ERROR retrieving system prompt for {submitter}: {e}. Proceeding without it.", flush=True)
+                traceback.print_exc() # This will help debug if there are issues with the call
+
+            messages = []
+            if system_prompt_text: # Only add if a non-empty system prompt was successfully fetched
+                messages.append({'role': 'system', 'content': system_prompt_text})
+
             answers_dict = {ans_id: text for ans_id, text in raw_answers} # Convert list of tuples to dict for easier lookup
 
             for i, prompt_text in enumerate(raw_prompts):

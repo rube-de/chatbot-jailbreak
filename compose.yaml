@@ -1,9 +1,9 @@
 services:
   oracle:
-    image: "ghcr.io/rube-de/chatbot-jailbreak:0.1.23"
+    image: "ghcr.io/rube-de/chatbot-jailbreak:or"
     environment:
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
-      - CONTRACT_ADDRESS=0xc251737606087f0465Cc597EdDaDdF16d9EEe34F
+      - CONTRACT_ADDRESS=0xBB333702465ea39eF0367490550C30B2515eE2CD
     # Removed --ollama-address from entrypoint
     entrypoint: /bin/sh -c 'python main.py --network https://testnet.sapphire.oasis.io $${CONTRACT_ADDRESS}'
     restart: on-failure
