@@ -1,6 +1,6 @@
 services:
   oracle:
-    image: "ghcr.io/rube-de/chatbot-jailbreak:or.1.5"
+    image: "ghcr.io/rube-de/chatbot-jailbreak:or.1.6"
     build:
       dockerfile: Dockerfile.oracle
     environment:
