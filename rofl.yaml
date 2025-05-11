@@ -31,9 +31,12 @@ deployments:
           min_tcb_evaluation_data_number: 18
           tdx: {}
       enclaves:
-        - Lob7dp84qz095u/2aMSsoTeZ/MivMKMNahflPry6ZUoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==
-        - dhgce6WXT94s0oerXL9Rq7F34WrdhfsKl6uwO7FdPyEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==
+        - id: Lob7dp84qz095u/2aMSsoTeZ/MivMKMNahflPry6ZUoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==
+        - id: dhgce6WXT94s0oerXL9Rq7F34WrdhfsKl6uwO7FdPyEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==
       endorsements:
         - any: {}
       fees: endorsing_node
       max_expiration: 3
+    secrets:
+      - name: OPENROUTER_API_KEY
+        value: pGJwa1ggk14DdZa+4m8/CtGF49Ie1pYZaDYn2MgzcH7YJkFi3HVkbmFtZVgi64FaBI7EU0lPj/DlKy6yw2TETjv9VuZbBU6+RGEg+9Tx1WVub25jZU/+ufbYVsBi+UXY7xqGWxZldmFsdWVYWS6Sz4g/fgJtFScr/d+9AA62/SQtx8QL31LHPPLXuXbpaFH151FggoFQpcpeqhTu8ZuTQLYX7v52tBKrEguvAxwP+4dcjjZiuQGCBkfCE3z32/XVB1SWl7Z0
