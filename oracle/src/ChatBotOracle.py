@@ -128,11 +128,6 @@ class ChatBotOracle:
                 print("Messages sent to OR:")
                 print(json.dumps(messages, indent=2))
 
-            client = Client(
-                host=self.ollama_address,
-            )
-            response: ChatResponse = client.chat(model='deepseek-r1:1.5b', messages=messages)
-            
             headers = {
                 "Authorization": f"Bearer {self.openrouter_api_key}",
                 "HTTP-Referer": "openrouter_url", 
