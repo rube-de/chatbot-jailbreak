@@ -1,6 +1,7 @@
 import asyncio
 import requests
 import json
+import time 
 
 from .ContractUtility import ContractUtility
 from .RoflUtility import RoflUtility
@@ -163,15 +164,6 @@ class ChatBotOracle:
                     print("Ollama response structure not as expected for logging.")
 
             return response['message']['content']
-        except ResponseError as e_ollama: # Specific Ollama error
-            print(f"Ollama API ResponseError:")
-            if hasattr(e_ollama, 'status_code'):
-                print(f"  Status Code: {e_ollama.status_code}")
-            if hasattr(e_ollama, 'error'):
-                print(f"  Error: {e_ollama.error}")
-            else:
-                print(f"  Raw Ollama error: {e_ollama}")
-            return "Error generating response from Ollama (API ResponseError)"
         except Exception as e_generic: # Generic error
             print(f"Error calling Ollama API (generic exception): {e_generic}")
             # Attempt to see if the generic exception object has more details
