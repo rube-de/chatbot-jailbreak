@@ -131,7 +131,7 @@ class ChatBotOracle:
 
             headers = {
                 "Authorization": f"Bearer {self.openrouter_api_key}",
-                "HTTP-Referer": "openrouter_url", 
+                "HTTP-Referer": "http://localhost", 
                 "X-Title": "ROFL Chatbot", # TODO: Replace with your app name
                 "Content-Type": "application/json"
             }
@@ -161,11 +161,11 @@ class ChatBotOracle:
                 elif 'message' in response: # if message is not a dict but has content
                      print(str(response['message'])) # fallback to string representation
                 else:
-                    print("Ollama response structure not as expected for logging.")
+                    print("Open Router response structure not as expected for logging.")
 
             return response['message']['content']
         except Exception as e_generic: # Generic error
-            print(f"Error calling Ollama API (generic exception): {e_generic}")
+            print(f"Error calling OpenRouter API (generic exception): {e_generic}")
             # Attempt to see if the generic exception object has more details
             if hasattr(e_generic, 'args') and e_generic.args:
                 print(f"  Exception args: {e_generic.args}")
