@@ -1,10 +1,10 @@
 name: chatbot-jailbreak
-version: 0.1.31
+version: 0.1.32
 tee: tdx
 kind: container
 resources:
   memory: 4096
-  cpus: 1
+  cpus: 2
   storage:
     kind: disk-persistent
     size: 10000
@@ -17,14 +17,13 @@ artifacts:
     compose: compose.yaml
 deployments:
   default:
-    app_id: rofl1qr4rh27vg0wh992hgyhp2385r4ky4cn9ystrwt3e
+    app_id: rofl1qpdpg78zfqa6kfks4atptup2rgyxxfeuqsaq2s3m
     network: testnet
     paratime: sapphire
     admin: myaccount
-    oci_repository: rofl.sh/b088cfb1-c706-45c2-a5da-52dbb33539e5:1746883538
     trust_root:
-      height: 26389668
-      hash: 7d709a1f56f70bf8b2e6fc71ba8843166d0fd75dee9d43b156bacc8a0125385e
+      height: 26538182
+      hash: 498f42096881b867dec710438335a28b7a5e6ca2008125b00c1eca11ee3422c0
     policy:
       quotes:
         pcs:
@@ -32,17 +31,9 @@ deployments:
           min_tcb_evaluation_data_number: 18
           tdx: {}
       enclaves:
-        - id: 5Zhdjz1GcvZkm6RyEVNoIVhmn2V/kv7fu5SxruHsz2oAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==
-        - id: dCX2mjC4B1cf3H8THCqbglw9OcpUxIz/IlQjnZB+lGcAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==
+        - uTCWuk+4nZiaSkRlUIei4Vu1NGeBSSFzerR1ID9aOLcAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==
+        - 95xk3yAFwYj1PN7olH3559AM2h39gm2YSV1osjo8mxgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==
       endorsements:
         - any: {}
       fees: endorsing_node
       max_expiration: 3
-    secrets:
-      - name: OPENROUTER_API_KEY
-        value: pGJwa1ggpZ+ZNCeOIC7teI7MhEuJu5Mg1pq0nQTm8vG9I69W73BkbmFtZVgislzJgfGxxhMCXxm+D+Z2cKua1SjAoZ34N0SlzFu48RJW5GVub25jZU+YzVBGjXWbnmwjtD4ehUdldmFsdWVYWWxzHbS2VgWSn+15f4XDdcoM3eBxu4CUiSOZRL4rNIiOYty98gT8lsQc2nXGVK0gT8cTDNbWiieLOln1S9UFobFn0y0ABJ2jqWss5N8qek2i/PBnQMyrYnVD
-    machines:
-      default:
-        provider: oasis1qp2ens0hsp7gh23wajxa4hpetkdek3swyyulyrmz
-        offer: playground_short
-        id: 000000000000003d

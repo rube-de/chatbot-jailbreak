@@ -30,7 +30,7 @@ class ChatBotOracle:
             self.account_address = self.w3.eth.default_account # Get address from wrapped instance
 
             # Load contract ABI and bytecode
-            abi, _ = self.contract_utility.get_contract('ChatBotGasless') # Ignore bytecode for now
+            abi, _ = ContractUtility.get_contract('ChatBotGasless') # Ignore bytecode for now
 
             # Create contract object
             self.contract = self.w3.eth.contract(address=contract_address, abi=abi)
