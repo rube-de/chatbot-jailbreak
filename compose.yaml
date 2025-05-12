@@ -1,8 +1,10 @@
 services:
   oracle:
-    image: "ghcr.io/rube-de/chatbot-jailbreak:or.1.6"
+    image: "ghcr.io/rube-de/chatbot-jailbreak:or.1.8"
     build:
+      context: .
       dockerfile: Dockerfile.oracle
+    platform: linux/amd64
     environment:
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
       - CONTRACT_ADDRESS=0x859f08C3D9F3030771E5f249e5F599e8DEa1FC75
