@@ -43,6 +43,7 @@ class ChatBotOracle:
         print(f"Listening for prompts...", flush=True)
         while True:
             logs = self.contract.events.PromptSubmitted().get_logs(from_block=self.w3.eth.block_number)
+            last_processed_block = self.w3.eth.block_number - 1
             for log in logs:
                 submitter = log.args.sender
                 print(f"New prompt submitted by {submitter}")
@@ -57,6 +58,12 @@ class ChatBotOracle:
                 answer = self.ask_chat_bot(prompts, answers)
                 print(f"Storing chat bot answer for {submitter}", flush=True)
                 self.submit_answer(answer, len(prompts)-1, submitter)
+            # Update the last processed block
+            current_block = self.w3.eth.block_number
+            if current_block > last_processed_block:
+                last_processed_block = current_block
+                print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Updated last processed block to {last_processed_block}", flush=True)
+            
             await asyncio.sleep(poll_interval)
 
     def run(self) -> None:
