@@ -83,13 +83,27 @@ def main():
         debug_print(f"  ROFL Key ID: {arguments.key_id}", debug_mode)
         debug_print(f"  Secret Provided: {'Yes' if arguments.secret else 'No (will fetch from KMS)'}", debug_mode)
 
-    # Get OpenRouter API Key from environment variable
+    # Get LLM provider configuration from environment variables
+    llm_provider = os.getenv("LLM_PROVIDER", "openrouter").lower()
     openrouter_api_key = os.getenv("OPENROUTER_API_KEY")
-    if not openrouter_api_key:
-        print("ERROR: OPENROUTER_API_KEY environment variable not set.", flush=True)
-        sys.exit(1)
-    else:
+    ollama_address = os.getenv("OLLAMA_ADDRESS")
+    
+    debug_print(f"LLM Provider: {llm_provider}", debug_mode)
+    
+    # Validate environment variable combinations
+    if llm_provider == "openrouter":
+        if not openrouter_api_key:
+            print("ERROR: OPENROUTER_API_KEY environment variable required when LLM_PROVIDER=openrouter", flush=True)
+            sys.exit(1)
         debug_print("OpenRouter API Key loaded from environment.", debug_mode)
+    elif llm_provider == "ollama":
+        if not ollama_address:
+            print("ERROR: OLLAMA_ADDRESS environment variable required when LLM_PROVIDER=ollama", flush=True)
+            sys.exit(1)
+        debug_print(f"Ollama address loaded from environment: {ollama_address}", debug_mode)
+    else:
+        print(f"ERROR: Invalid LLM_PROVIDER='{llm_provider}'. Must be 'openrouter' or 'ollama'", flush=True)
+        sys.exit(1)
 
     secret = None
     rofl_utility = None
@@ -137,9 +151,12 @@ def main():
         chatBotOracle = ChatBotOracle(
             arguments.contract_address,
             arguments.network,
-            openrouter_api_key,
             rofl_utility,
-            secret
+            secret,
+            llm_provider,
+            openrouter_api_key,
+            ollama_address,
+            debug_mode
         )
         debug_print("ChatBotOracle instantiated. Starting run loop...", debug_mode)
         chatBotOracle.run()

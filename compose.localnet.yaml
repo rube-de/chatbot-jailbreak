@@ -21,8 +21,10 @@ services:
 
   oracle:
     environment:
-      CONTRACT_ADDRESS: 0x5FbDB2315678afecb367f032d93F642f64180aa3
+      LLM_PROVIDER: ${LLM_PROVIDER}
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      OLLAMA_ADDRESS: ${OLLAMA_ADDRESS}
+      CONTRACT_ADDRESS: 0x5FbDB2315678afecb367f032d93F642f64180aa3
     build:
       dockerfile: Dockerfile.oracle
     # Updated entrypoint: removed --ollama-address, using $CONTRACT_ADDRESS env var

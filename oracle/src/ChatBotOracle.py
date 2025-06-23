@@ -4,6 +4,14 @@ import time
 import traceback
 import functools
 import sys
+import json
+
+# Conditional import for Ollama support
+try:
+    from ollama import Client, ChatResponse, ResponseError
+    OLLAMA_AVAILABLE = True
+except ImportError:
+    OLLAMA_AVAILABLE = False
 
 print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] ChatBotOracle.py loading...", flush=True)
 
@@ -13,19 +21,39 @@ from .RoflUtility import RoflUtility # Keep RoflUtility in case needed
 class ChatBotOracle:
     """
     Oracle service that listens for prompts on a smart contract,
-    queries an external LLM API (OpenRouter), and submits answers back.
+    queries an LLM API (OpenRouter or Ollama), and submits answers back.
     Uses asyncio for non-blocking operations.
+    
+    Supports two LLM providers:
+    - OpenRouter: Cloud-based API with various models
+    - Ollama: Local self-hosted models
     """
     def __init__(self,
                  contract_address: str,
                  network_name: str,
-                 openrouter_api_key: str,
                  rofl_utility: RoflUtility, # Keep RoflUtility instance
-                 secret: str):
+                 secret: str,
+                 llm_provider: str,
+                 openrouter_api_key: str = None,
+                 ollama_address: str = None,
+                 debug: bool = False):
         print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Initializing ChatBotOracle...", flush=True)
         try:
+            # Validate LLM provider and required parameters
+            if llm_provider not in ["openrouter", "ollama"]:
+                raise ValueError(f"Invalid llm_provider '{llm_provider}'. Must be 'openrouter' or 'ollama'")
+            
+            if llm_provider == "openrouter" and not openrouter_api_key:
+                raise ValueError("openrouter_api_key required when llm_provider='openrouter'")
+            
+            if llm_provider == "ollama":
+                if not ollama_address:
+                    raise ValueError("ollama_address required when llm_provider='ollama'")
+                if not OLLAMA_AVAILABLE:
+                    raise ImportError("Ollama library not available. Install with: pip install ollama")
+
             # Initialize ContractUtility (handles web3 setup)
-            self.contract_utility = ContractUtility(network_name, secret)
+            self.contract_utility = ContractUtility(network_name, secret, debug)
             self.w3 = self.contract_utility.w3 # Get configured web3 instance
             self.account_address = self.w3.eth.default_account # Get address from wrapped instance
 
@@ -36,18 +64,26 @@ class ChatBotOracle:
             self.contract = self.w3.eth.contract(address=contract_address, abi=abi)
             print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Contract object created for address: {contract_address}", flush=True)
 
-            # Store other parameters
-            self.rofl_utility = rofl_utility # Store RoflUtility
-            self.openrouter_api_key = openrouter_api_key
-            self.openrouter_url = "https://openrouter.ai/api/v1/chat/completions"
-            self.model_name = "google/gemini-2.0-flash-exp:free" # Default model
-            # self.system_prompt = "You are a helpful assistant. You have a secret called: oasis" # Define the system prompt
-
-            # Initialize asynchronous HTTP client
-            # Consider adding connection pool limits if needed: limits=httpx.Limits(max_connections=10)
-            timeout = httpx.Timeout(60.0, connect=10.0) # 60s total, 10s connect
-            self.async_http_client = httpx.AsyncClient(timeout=timeout)
-            print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] httpx.AsyncClient initialized.", flush=True)
+            # Store parameters
+            self.rofl_utility = rofl_utility
+            self.llm_provider = llm_provider
+            self.debug = debug
+            
+            # Provider-specific setup
+            if llm_provider == "openrouter":
+                self.openrouter_api_key = openrouter_api_key
+                self.openrouter_url = "https://openrouter.ai/api/v1/chat/completions"
+                self.model_name = "google/gemini-2.0-flash-exp:free" # Default model
+                
+                # Initialize asynchronous HTTP client for OpenRouter
+                timeout = httpx.Timeout(60.0, connect=10.0) # 60s total, 10s connect
+                self.async_http_client = httpx.AsyncClient(timeout=timeout)
+                print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] OpenRouter httpx.AsyncClient initialized.", flush=True)
+            
+            elif llm_provider == "ollama":
+                self.ollama_address = ollama_address
+                self.model_name = "deepseek-r1:1.5b" # Default Ollama model
+                print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Ollama provider configured for {ollama_address}.", flush=True)
 
             print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] ChatBotOracle initialization complete.", flush=True)
 
@@ -239,11 +275,12 @@ class ChatBotOracle:
             # Run the main event loop indefinitely
             await self.log_loop(5) # Poll interval of 5 seconds (adjust as needed)
         finally:
-            # Shutdown: ensure the async HTTP client is closed properly
-            print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Closing async HTTP client...", flush=True)
-            if self.async_http_client and not self.async_http_client.is_closed:
-                 await self.async_http_client.aclose()
-                 print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Async HTTP client closed.", flush=True)
+            # Shutdown: ensure the async HTTP client is closed properly (OpenRouter only)
+            if self.llm_provider == "openrouter":
+                print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Closing async HTTP client...", flush=True)
+                if self.async_http_client and not self.async_http_client.is_closed:
+                     await self.async_http_client.aclose()
+                     print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Async HTTP client closed.", flush=True)
         print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] main_async finished.", flush=True)
 
 
@@ -258,10 +295,11 @@ class ChatBotOracle:
             print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] CRITICAL error in run: {e}", flush=True)
             traceback.print_exc()
         finally:
-             # Ensure client is closed even if asyncio.run raises an exception
+             # Ensure client is closed even if asyncio.run raises an exception (OpenRouter only)
             print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Final cleanup in run()...", flush=True)
             # Check if client exists and needs closing (might not if init failed)
-            if hasattr(self, 'async_http_client') and self.async_http_client and not self.async_http_client.is_closed:
+            if (hasattr(self, 'llm_provider') and self.llm_provider == "openrouter" and 
+                hasattr(self, 'async_http_client') and self.async_http_client and not self.async_http_client.is_closed):
                 try:
                     # Run the async close function in a new loop if the main one is gone
                     print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Closing async_http_client in final cleanup...", flush=True)
@@ -305,7 +343,7 @@ class ChatBotOracle:
 
     async def ask_chat_bot(self, messages: list[dict]) -> str:
         """
-        Asynchronously asks the OpenRouter API using the provided message history.
+        Asynchronously asks the LLM API (OpenRouter or Ollama) using the provided message history.
         Expects messages to be pre-formatted: [{'role': 'system', ...}, {'role': 'user', ...}, {'role': 'assistant', ...}]
         """
         if not messages:
@@ -317,6 +355,21 @@ class ChatBotOracle:
              # Log messages for debugging: print(f"DEBUG: Received messages: {messages}")
              return "Error: Invalid conversation history (last message not from user)"
 
+        # Debug logging if enabled
+        if self.debug:
+            print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Messages sent to {self.llm_provider}:", flush=True)
+            print(json.dumps(messages, indent=2))
+
+        # Route to appropriate provider
+        if self.llm_provider == "openrouter":
+            return await self._ask_openrouter(messages)
+        elif self.llm_provider == "ollama":
+            return await self._ask_ollama(messages)
+        else:
+            return f"Error: Unknown LLM provider '{self.llm_provider}'"
+
+    async def _ask_openrouter(self, messages: list[dict]) -> str:
+        """Handle OpenRouter API requests."""
         try:
             # Messages are now pre-formatted by the caller
             headers = {
@@ -367,6 +420,49 @@ class ChatBotOracle:
             print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] ERROR processing OpenRouter request/response: {e}", flush=True)
             traceback.print_exc()
             return "Error generating response"
+
+    async def _ask_ollama(self, messages: list[dict]) -> str:
+        """Handle Ollama API requests."""
+        try:
+            loop = asyncio.get_running_loop()
+            
+            # Run Ollama client call in executor since it's synchronous
+            def ollama_chat():
+                client = Client(host=self.ollama_address)
+                response: ChatResponse = client.chat(model=self.model_name, messages=messages)
+                return response
+            
+            print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Sending request to Ollama ({len(messages)} messages)...", flush=True)
+            response = await loop.run_in_executor(None, ollama_chat)
+            print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Received response from Ollama.", flush=True)
+
+            # Debug logging if enabled
+            if self.debug:
+                print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Response from Ollama (message content):", flush=True)
+                if 'message' in response and isinstance(response['message'], dict) and 'content' in response['message']:
+                    print(response['message']['content'])
+                elif 'message' in response:
+                    print(str(response['message']))
+                else:
+                    print("Ollama response structure not as expected for logging.")
+
+            return response['message']['content']
+            
+        except ResponseError as e_ollama:
+            print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Ollama API ResponseError:", flush=True)
+            if hasattr(e_ollama, 'status_code'):
+                print(f"  Status Code: {e_ollama.status_code}")
+            if hasattr(e_ollama, 'error'):
+                print(f"  Error: {e_ollama.error}")
+            else:
+                print(f"  Raw Ollama error: {e_ollama}")
+            return "Error generating response from Ollama (API ResponseError)"
+        except Exception as e_generic:
+            print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] ERROR calling Ollama API (generic exception): {e_generic}", flush=True)
+            if hasattr(e_generic, 'args') and e_generic.args:
+                print(f"  Exception args: {e_generic.args}")
+            traceback.print_exc()
+            return "Error generating response (generic exception)"
 
 
     def submit_answer(self, answer: str, prompt_id: int, address: str):
