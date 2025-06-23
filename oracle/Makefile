@@ -29,7 +29,7 @@ dist:
 
 # Run the application
 run:
-	$(PYTHON) src/main.py
+	$(PYTHON) main.py
 
 run-localnet:
 	@printf "$(CYAN)*** Starting $(BLUE)sapphire-localnet$(CYAN)...$(OFF)\n"
