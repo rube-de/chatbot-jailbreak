@@ -9,7 +9,7 @@ services:
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
       - CONTRACT_ADDRESS=0x859f08C3D9F3030771E5f249e5F599e8DEa1FC75
     # Removed --ollama-address from entrypoint
-    entrypoint: /bin/sh -c 'python main.py --network https://testnet.sapphire.oasis.io $${CONTRACT_ADDRESS}'
+    entrypoint: /bin/sh -c 'python main.py --debug --network https://testnet.sapphire.oasis.io $${CONTRACT_ADDRESS}'
     restart: on-failure
     volumes:
       - /run/rofl-appd.sock:/run/rofl-appd.sock
