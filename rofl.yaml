@@ -41,4 +41,4 @@ deployments:
       - name: OPENROUTER_API_KEY
         value: pGJwa1ggk14DdZa+4m8/CtGF49Ie1pYZaDYn2MgzcH7YJkFi3HVkbmFtZVgi64FaBI7EU0lPj/DlKy6yw2TETjv9VuZbBU6+RGEg+9Tx1WVub25jZU/+ufbYVsBi+UXY7xqGWxZldmFsdWVYWS6Sz4g/fgJtFScr/d+9AA62/SQtx8QL31LHPPLXuXbpaFH151FggoFQpcpeqhTu8ZuTQLYX7v52tBKrEguvAxwP+4dcjjZiuQGCBkfCE3z32/XVB1SWl7Z0
       - name: LLM_PROVIDER
-        value: pGJwa1ggLWgr2nSAqQXmDtYkuQL0tX29spgqvDVj4uebwBA+VkhkbmFtZVgcWp0wMJI++T+IGlp66mbym0XrXSFFH8f2nMQ3t2Vub25jZU/JNKqZ6s4RqMlORkz9AotldmFsdWVWT9whOp/GXoNz1nMFgADDe+GpLG7iAg==
+        value: pGJwa1ggCMIze8ZhTgyb+fMeW2k/c/Ob1HKta/uwMVMCTGq5NXZkbmFtZVgc2Mj+iorxnPWFhiFFX1R/MP/aCMR/PzC3TWSO4GVub25jZU/Tzl9jObdr8f+8ZdwzHrdldmFsdWVYGtMFjWA9gizoYaflf+ui8BYZo78goIkc5l9I
