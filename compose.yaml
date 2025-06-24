@@ -1,4 +1,13 @@
 services:
+  ollama:
+    image: "docker.io/ollama/ollama"
+    platform: linux/amd64
+    ports:
+      - "11434:11434"
+    volumes:
+      - /storage/ollama:/root/.ollama
+    entrypoint: ["/usr/bin/bash", "-c", "/bin/ollama serve & sleep 5; ollama pull deepseek-r1:1.5b; wait"]
+
   oracle:
     image: "ghcr.io/rube-de/chatbot-jailbreak:or.1.8"
     build:
@@ -8,7 +17,7 @@ services:
     environment:
       - LLM_PROVIDER=${LLM_PROVIDER}
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
-      - OLLAMA_ADDRESS=${OLLAMA_ADDRESS}
+      - OLLAMA_ADDRESS=http://ollama:11434
       - CONTRACT_ADDRESS=0x859f08C3D9F3030771E5f249e5F599e8DEa1FC75
     # Removed --ollama-address from entrypoint
     entrypoint: /bin/sh -c 'python main.py --debug --network https://testnet.sapphire.oasis.io $${CONTRACT_ADDRESS}'

@@ -2,5 +2,6 @@ flake8
 py-solc-x
 pytest
 oasis-sapphire-py
+ollama
 httpx
 # Removed specific web3 version to allow oasis-sapphire-py to determine the compatible version
