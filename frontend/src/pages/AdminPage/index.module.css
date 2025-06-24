@@ -1,0 +1,83 @@
+.adminPageContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem;
+  max-width: 600px;
+  margin: auto;
+  color: var(--text-color-primary); /* Assuming CSS variables */
+}
+
+.title {
+  font-size: 1.8rem;
+  margin-bottom: 1.5rem;
+  color: var(--text-color-primary, #FFFFFF); /* Fallback to white */
+}
+
+.form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border-radius: var(--border-radius); 
+  border: 1px solid #CCCCCC; /* Light gray border */
+  font-size: 1rem;
+  background-color: #FFFFFF; /* White background */
+  color: #000000; /* Black text */
+  resize: vertical;
+}
+
+.textarea::placeholder {
+  color: #555555; /* Darker gray placeholder on white background */
+  opacity: 1; 
+}
+
+.textarea:focus {
+  outline: none;
+  border-color: var(--accent-color, #007bff); 
+  box-shadow: 0 0 0 2px var(--accent-color-transparent, rgba(0, 123, 255, 0.25)); 
+}
+
+.statusMessage {
+  margin-top: 1rem;
+  /* padding: 0.75rem; Let Alert component handle its own padding */
+  border-radius: var(--border-radius);
+  width: 100%;
+  text-align: center;
+  /* max-height: 150px; /* Example: constrain height if Alert is too tall */
+  /* overflow-y: auto; /* Add scroll if content overflows constrained height */
+}
+
+.success {
+  /* Styles for Alert component will handle this if type='success' is supported */
+}
+
+.error {
+   /* Styles for Alert component will handle this if type='error' is supported */
+}
+
+.loadingPage {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px; /* Or full page height */
+  font-size: 1.2rem;
+  color: var(--text-color-secondary, #BBBBBB); /* Fallback to light gray */
+}
+
+/* Add styles for the button within the form if needed,
+   assuming the global Button component might not have a perfect variant.
+   This is a fallback if Button variants aren't sufficient. */
+.form button {
+  /* Example: Ensure button text is light if background is dark */
+  /* color: var(--button-text-color-on-dark-bg, #FFFFFF); */
+  /* background-color: var(--button-bg-on-dark-bg, #007bff); */
+  /* These would only apply if the <Button> component itself doesn't handle theming well. */
+  /* For now, we assume the <Button variant="outline"> or default is okay,
+     but if the user reports button styling issues, we'd uncomment and adjust here. */
+}

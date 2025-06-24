@@ -13,7 +13,7 @@ contract ChatBotScript is Script {
         vm.startBroadcast();
 
         // TODO
-        chatBot = new ChatBot("example.com", hex"000000000000000000000000000000000000000000", address(0));
+        chatBot = new ChatBot("example.com", hex"000000000000000000000000000000000000000000", address(0), address(0));
 
         vm.stopBroadcast();
     }

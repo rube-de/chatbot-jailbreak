@@ -26,10 +26,12 @@ export interface Web3ProviderContext {
   switchNetwork: (chainId?: bigint) => Promise<void>
   getTransaction: (txHash: string) => Promise<TransactionResponse | null>
   getGasPrice: () => Promise<bigint>
-  isProviderAvailable: () => Promise<boolean>
   getPromptsAnswers: () => Promise<PromptsAnswers | null>
   ask: (prompt: string) => Promise<void>
+  submitPromptGasless: (prompt: string) => Promise<void>; // Added new function for gasless submission
   clear: () => Promise<void>
+  getOwner: () => Promise<string | null>
+  setSystemPrompt: (newPrompt: string) => Promise<void>
 }
 
 export const Web3Context = createContext<Web3ProviderContext>({} as Web3ProviderContext)

@@ -12,3 +12,13 @@ docs/
 
 # Dotenv file
 .env
+
+# Hardhat
+artifacts
+cache_hardhat
+typechain
+node_modules/
+typechain-types/
+hardhat.config.ts.backup*
+coverage.json
+coverage/

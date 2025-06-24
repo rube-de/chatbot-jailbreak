@@ -1,6 +1,6 @@
-FROM ghcr.io/foundry-rs/foundry:latest AS contracts-build
+FROM ghcr.io/foundry-rs/foundry:stable AS contracts-build
 WORKDIR /contracts
-COPY ./contracts .
+COPY ./contracts /contracts
 RUN forge build
 
 FROM python:alpine3.17 AS oracle

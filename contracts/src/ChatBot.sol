@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.24;
+pragma solidity ^0.8.24;
 
 import {Subcall} from "@oasisprotocol/sapphire-contracts/contracts/Subcall.sol";
 import {SiweAuth} from "@oasisprotocol/sapphire-contracts/contracts/auth/SiweAuth.sol";
@@ -25,12 +25,19 @@ contract ChatBot is SiweAuth, Ownable {
     error PromptAlreadyAnswered();
     error UnauthorizedUserOrOracle();
     error UnauthorizedOracle();
+    error NotOwnerOrOracle();
 
-    // Sets up a chat bot smart contract where.
-    // @param domain is used for SIWE login on the frontend
-    // @param roflAppId is the attested ROFL app that is allowed to call setOracle()
-    // @param inOracle only for testing, not attested; set the oracle address for accessing prompts
-    constructor(string memory domain, bytes21 inRoflAppID, address inOracle) SiweAuth(domain) Ownable(msg.sender) {
+    // Sets up a chat bot smart contract.
+    // @param domain is used for SIWE login on the frontend.
+    // @param inRoflAppID is the attested ROFL app that is allowed to call setOracle().
+    // @param inOracle only for testing, not attested; set the oracle address for accessing prompts.
+    // @param initialOwner The initial owner of this contract.
+    constructor(
+        string memory domain,
+        bytes21 inRoflAppID,
+        address inOracle,
+        address initialOwner
+    ) SiweAuth(domain) Ownable(initialOwner) {
         roflAppID = inRoflAppID;
         oracle = inOracle;
         systemPrompt = "You are a helpful AI assistant."; // Default system prompt
@@ -44,8 +51,16 @@ contract ChatBot is SiweAuth, Ownable {
         if (msg.sender != addr && msg.sender != oracle) {
             address msgSender = authMsgSender(authToken);
             if (msgSender != addr) {
-                revert UnauthorizedUserOrOracle();
+                revert UnauthorizedUserOrOracle(); // Existing error, suitable here
             }
+        }
+        _;
+    }
+
+    /// @dev Throws if called by any account other than the owner or the oracle.
+    modifier onlyOwnerOrOracle() {
+        if (msg.sender != owner() && msg.sender != oracle) {
+            revert NotOwnerOrOracle();
         }
         _;
     }
@@ -55,14 +70,6 @@ contract ChatBot is SiweAuth, Ownable {
     modifier onlyOracle() {
         if (msg.sender != oracle) {
             revert UnauthorizedOracle();
-        }
-        _;
-    }
-
-    // Checks whether the transaction or query was signed by the owner or the oracle.
-    modifier onlyOwnerOrOracle() {
-        if (msg.sender != owner() && msg.sender != oracle) {
-            revert UnauthorizedUserOrOracle(); // Reusing existing error for simplicity
         }
         _;
     }
@@ -123,21 +130,9 @@ contract ChatBot is SiweAuth, Ownable {
         oracle = addr;
     }
 
-    // Sets the system prompt for the AI model.
-    // Only the contract owner can call this function.
-    function setSystemPrompt(string memory newPrompt) external onlyOwner {
-        systemPrompt = newPrompt;
-    }
-
-    // Returns the current system prompt.
-    // Only the owner or the oracle can call this function.
-    function getSystemPrompt() external view onlyOwnerOrOracle returns (string memory) {
-        return systemPrompt;
-    }
-
     // Submits the answer to the prompt for a given user address.
     // Called by the oracle within TEE.
-    function submitAnswer(string memory answer, uint256 promptId, address addr) external onlyTEE(roflAppID) {
+    function submitAnswer(string memory answer, uint256 promptId, address addr) external onlyOracle() {
         if (promptId >= _prompts[addr].length) {
             revert InvalidPromptId();
         }
@@ -149,5 +144,19 @@ contract ChatBot is SiweAuth, Ownable {
             answer: answer
         }));
         emit AnswerSubmitted(addr);
+    }
+
+    /// @notice Sets the system prompt for the chatbot.
+    /// @dev Can only be called by the owner.
+    /// @param _newPrompt The new system prompt string.
+    function setSystemPrompt(string memory _newPrompt) external onlyOwner {
+        systemPrompt = _newPrompt;
+    }
+
+    /// @notice Gets the current system prompt.
+    /// @dev Can only be called by the owner or the oracle.
+    /// @return The current system prompt string.
+    function getSystemPrompt() external view onlyOwnerOrOracle returns (string memory) {
+        return systemPrompt;
     }
 }

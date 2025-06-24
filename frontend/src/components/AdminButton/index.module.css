@@ -1,0 +1,10 @@
+.adminButtonLink {
+  margin-left: 1rem; /* Adjust as needed */
+  text-decoration: none;
+}
+
+.loading {
+  margin-left: 1rem;
+  color: var(--text-color-secondary); /* Assuming CSS variables are used */
+  font-size: 0.9rem;
+}

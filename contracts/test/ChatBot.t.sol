@@ -16,7 +16,7 @@ contract ChatBotTest is Test {
         _oracle = address(0x123);
         user = address(0x456);
         bytes21 roflAppID = bytes21(0);
-        chatBot = new ChatBot(domain, roflAppID, _oracle);
+        chatBot = new ChatBot(domain, roflAppID, _oracle, user);
     }
 
     function test_appendPrompt() public {

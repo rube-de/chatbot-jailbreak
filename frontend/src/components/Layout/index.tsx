@@ -1,7 +1,8 @@
 import { FC } from 'react'
-import { Outlet } from 'react-router-dom'
+import { Outlet, Link } from 'react-router-dom' // Import Link
 import classes from './index.module.css'
 import { ConnectWallet } from '../ConnectWallet'
+import { AdminButton } from '../AdminButton/AdminButton' // Import AdminButton
 import { Alert } from '../Alert'
 import { useAppState } from '../../hooks/useAppState'
 import { Button } from '../Button'
@@ -17,6 +18,11 @@ export const Layout: FC = () => {
     setShowFaucetNotification,
   } = useAppState()
 
+  // default state for showFaucetNotification false
+  if (VITE_NETWORK === 23293n || VITE_NETWORK === 23295n || VITE_NETWORK === 23294n) {
+    setShowFaucetNotification(false)
+  }
+
   return (
     <LayoutBase
       header={
@@ -26,7 +32,7 @@ export const Layout: FC = () => {
               <p>
                 Don't have any TEST tokens on Sapphire Testnet? Get some from our{' '}
                 <a
-                  href="https://faucet.testnet.oasis.dev/?paratime=sapphire"
+                  href="https://faucet.testnet.oasis.io/?paratime=sapphire"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -44,8 +50,15 @@ export const Layout: FC = () => {
             </div>
           )}
           <header className={classes.header}>
-            <LogoIcon />
-            <ConnectWallet inline={isMobileScreen} />
+            <Link to="/" className={classes.logoLink}>
+              <LogoIcon />
+            </Link>
+            <nav className={classes.navigation}>
+              <AdminButton />
+            </nav>
+            <div className={classes.walletSection}>
+              <ConnectWallet inline={isMobileScreen} />
+            </div>
           </header>
         </>
       }
